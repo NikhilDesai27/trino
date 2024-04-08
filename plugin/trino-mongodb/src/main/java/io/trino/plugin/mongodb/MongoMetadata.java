@@ -25,30 +25,7 @@ import io.trino.plugin.base.projection.ApplyProjectionUtil;
 import io.trino.plugin.mongodb.MongoIndex.MongodbIndexKey;
 import io.trino.plugin.mongodb.ptf.Query.QueryFunctionHandle;
 import io.trino.spi.TrinoException;
-import io.trino.spi.connector.Assignment;
-import io.trino.spi.connector.ColumnHandle;
-import io.trino.spi.connector.ColumnMetadata;
-import io.trino.spi.connector.ConnectorInsertTableHandle;
-import io.trino.spi.connector.ConnectorMetadata;
-import io.trino.spi.connector.ConnectorOutputMetadata;
-import io.trino.spi.connector.ConnectorOutputTableHandle;
-import io.trino.spi.connector.ConnectorSession;
-import io.trino.spi.connector.ConnectorTableHandle;
-import io.trino.spi.connector.ConnectorTableLayout;
-import io.trino.spi.connector.ConnectorTableMetadata;
-import io.trino.spi.connector.ConnectorTableProperties;
-import io.trino.spi.connector.Constraint;
-import io.trino.spi.connector.ConstraintApplicationResult;
-import io.trino.spi.connector.LimitApplicationResult;
-import io.trino.spi.connector.LocalProperty;
-import io.trino.spi.connector.NotFoundException;
-import io.trino.spi.connector.ProjectionApplicationResult;
-import io.trino.spi.connector.RetryMode;
-import io.trino.spi.connector.SchemaTableName;
-import io.trino.spi.connector.SchemaTablePrefix;
-import io.trino.spi.connector.SortingProperty;
-import io.trino.spi.connector.TableFunctionApplicationResult;
-import io.trino.spi.connector.TableNotFoundException;
+import io.trino.spi.connector.*;
 import io.trino.spi.expression.ConnectorExpression;
 import io.trino.spi.expression.FieldDereference;
 import io.trino.spi.expression.Variable;
@@ -587,6 +564,63 @@ public class MongoMetadata
                         handle.getConstraint(),
                         handle.getProjectedColumns(),
                         OptionalInt.of(toIntExact(limit))),
+                true,
+                false));
+    }
+
+    @Override
+    public Optional<TopNApplicationResult<ConnectorTableHandle>> applyTopN(ConnectorSession session, ConnectorTableHandle table, long topNCount, List<SortItem> sortItems, Map<String, ColumnHandle> assignments) {
+        MongoTableHandle handle = (MongoTableHandle) table;
+
+        // topNCount is analogous to limit
+
+        if (topNCount == 0) {
+            return Optional.empty();
+        }
+
+        if (topNCount > Integer.MAX_VALUE) {
+            return Optional.empty();
+        }
+
+        if (handle.getLimit().isPresent() && handle.getLimit().getAsInt() <= topNCount) {
+            return Optional.empty();
+        }
+
+        if (sortItems.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // MongoDB supports a maximum of 32 fields in it's cursor.sort() method (backed by $sort operator)
+        // see, https://www.mongodb.com/docs/manual/reference/method/cursor.sort/#limits
+        if(sortItems.size() > 32) {
+            return Optional.empty();
+        }
+
+        System.out.println("MongoDB: applyTopN with the following sortItems");
+
+        // MongoDB allows a column/field to take a value of any type across documents.
+        // Hence, it's sort order factors in this type information as well.
+        // null is valued less than any other type and so on
+        // see, https://www.mongodb.com/docs/manual/reference/method/cursor.sort/#ascending-descending-sort
+        // For now, we only support ASC_NULLS_FIRST and DESC_NULLS_LAST, as these are implemented in MongoDB by default
+        for (SortItem si: sortItems) {
+            System.out.println(si.toString());
+            if (si.getSortOrder() == SortOrder.ASC_NULLS_LAST) {
+                return Optional.empty();
+            } else if (si.getSortOrder() == SortOrder.DESC_NULLS_FIRST) {
+                return Optional.empty();
+            }
+        }
+
+        return Optional.of(new TopNApplicationResult<>(
+                new MongoTableHandle(
+                        handle.getSchemaTableName(),
+                        handle.getRemoteTableName(),
+                        handle.getFilter(),
+                        handle.getConstraint(),
+                        handle.getProjectedColumns(),
+                        OptionalInt.of(toIntExact(topNCount)),
+                        sortItems),
                 true,
                 false));
     }

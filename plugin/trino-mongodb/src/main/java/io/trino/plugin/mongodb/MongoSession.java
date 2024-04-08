@@ -42,11 +42,7 @@ import io.airlift.slice.Slice;
 import io.trino.cache.EvictableCacheBuilder;
 import io.trino.spi.HostAddress;
 import io.trino.spi.TrinoException;
-import io.trino.spi.connector.ColumnHandle;
-import io.trino.spi.connector.ColumnMetadata;
-import io.trino.spi.connector.SchemaNotFoundException;
-import io.trino.spi.connector.SchemaTableName;
-import io.trino.spi.connector.TableNotFoundException;
+import io.trino.spi.connector.*;
 import io.trino.spi.predicate.Domain;
 import io.trino.spi.predicate.Range;
 import io.trino.spi.predicate.TupleDomain;
@@ -518,7 +514,13 @@ public class MongoSession
 
         MongoCollection<Document> collection = getCollection(tableHandle.getRemoteTableName());
         Document filter = buildFilter(tableHandle);
-        FindIterable<Document> iterable = collection.find(filter).projection(projection).collation(SIMPLE_COLLATION);
+        FindIterable<Document> iterable = collection.find(filter).projection(projection);
+        // apply sort criteria to the cursor
+        if (!tableHandle.getSortItems().isEmpty()) {
+            Document sortCriteria = buildSortCriteria(tableHandle.getSortItems());
+            iterable.sort(sortCriteria);
+        }
+        iterable.collation(SIMPLE_COLLATION);
         tableHandle.getLimit().ifPresent(iterable::limit);
         log.debug("Find documents: collection: %s, filter: %s, projection: %s", tableHandle.getSchemaTableName(), filter, projection);
 
@@ -527,6 +529,19 @@ public class MongoSession
         }
 
         return iterable.iterator();
+    }
+
+    static Document buildSortCriteria(List<SortItem> sortItems)
+    {
+        Document sortCriteria = new Document();
+        for (SortItem si: sortItems) {
+            int sortOrderSignal = 1;
+            if (si.getSortOrder() == SortOrder.DESC_NULLS_LAST) {
+                sortOrderSignal = -1;
+            }
+            sortCriteria.append(si.getName(), sortOrderSignal);
+        }
+        return sortCriteria;
     }
 
     @VisibleForTesting
