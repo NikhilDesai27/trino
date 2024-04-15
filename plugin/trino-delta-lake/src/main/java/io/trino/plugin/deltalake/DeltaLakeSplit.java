@@ -192,13 +192,13 @@ public class DeltaLakeSplit
     }
 
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return ImmutableMap.<String, String>builder()
+        return ImmutableMap.builder()
                 .put("path", path)
-                .put("start", String.valueOf(start))
-                .put("length", String.valueOf(length))
-                .put("addresses", addresses.toString())
+                .put("start", start)
+                .put("length", length)
+                .put("addresses", addresses)
                 .buildOrThrow();
     }
 

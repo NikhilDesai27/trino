@@ -13,16 +13,19 @@
  */
 package io.trino.plugin.kudu.properties;
 
-import com.google.common.collect.ImmutableList;
-
 import java.util.List;
 
-import static java.util.Objects.requireNonNull;
-
-public record RangePartitionDefinition(List<String> columns)
+public class RangePartitionDefinition
 {
-    public RangePartitionDefinition
+    private List<String> columns;
+
+    public List<String> getColumns()
     {
-        columns = ImmutableList.copyOf(requireNonNull(columns, "columns is null"));
+        return columns;
+    }
+
+    public void setColumns(List<String> columns)
+    {
+        this.columns = columns;
     }
 }

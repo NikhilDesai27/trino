@@ -41,7 +41,7 @@ public class NoOpAnonymizer
     @Override
     public String anonymize(Symbol symbol)
     {
-        return symbol.name();
+        return symbol.getName();
     }
 
     @Override

@@ -14,7 +14,6 @@
 package io.trino.cost;
 
 import com.google.common.collect.ImmutableSet;
-import io.trino.spi.type.Type;
 import io.trino.sql.planner.Symbol;
 import org.assertj.core.api.Assertions;
 
@@ -22,7 +21,7 @@ import java.util.function.Consumer;
 
 import static com.google.common.collect.Sets.union;
 import static io.trino.cost.EstimateAssertion.assertEstimateEquals;
-import static io.trino.spi.type.DoubleType.DOUBLE;
+import static io.trino.type.UnknownType.UNKNOWN;
 
 public class PlanNodeStatsAssertion
 {
@@ -54,12 +53,7 @@ public class PlanNodeStatsAssertion
 
     public PlanNodeStatsAssertion symbolStats(String symbolName, Consumer<SymbolStatsAssertion> symbolStatsAssertionConsumer)
     {
-        return symbolStats(symbolName, DOUBLE, symbolStatsAssertionConsumer);
-    }
-
-    public PlanNodeStatsAssertion symbolStats(String symbolName, Type type, Consumer<SymbolStatsAssertion> symbolStatsAssertionConsumer)
-    {
-        return symbolStats(new Symbol(type, symbolName), symbolStatsAssertionConsumer);
+        return symbolStats(new Symbol(UNKNOWN, symbolName), symbolStatsAssertionConsumer);
     }
 
     public PlanNodeStatsAssertion symbolStats(Symbol symbol, Consumer<SymbolStatsAssertion> columnAssertionConsumer)
@@ -69,9 +63,9 @@ public class PlanNodeStatsAssertion
         return this;
     }
 
-    public PlanNodeStatsAssertion symbolStatsUnknown(String symbolName, Type type)
+    public PlanNodeStatsAssertion symbolStatsUnknown(String symbolName)
     {
-        return symbolStatsUnknown(new Symbol(type, symbolName));
+        return symbolStatsUnknown(new Symbol(UNKNOWN, symbolName));
     }
 
     public PlanNodeStatsAssertion symbolStatsUnknown(Symbol symbol)
@@ -104,10 +98,10 @@ public class PlanNodeStatsAssertion
 
     private void assertSymbolStatsEqual(Symbol symbol, SymbolStatsEstimate actual, SymbolStatsEstimate expected)
     {
-        assertEstimateEquals(actual.getNullsFraction(), expected.getNullsFraction(), "nullsFraction mismatch for %s", symbol.name());
-        assertEstimateEquals(actual.getLowValue(), expected.getLowValue(), "lowValue mismatch for %s", symbol.name());
-        assertEstimateEquals(actual.getHighValue(), expected.getHighValue(), "highValue mismatch for %s", symbol.name());
-        assertEstimateEquals(actual.getDistinctValuesCount(), expected.getDistinctValuesCount(), "distinct values count mismatch for %s", symbol.name());
-        assertEstimateEquals(actual.getAverageRowSize(), expected.getAverageRowSize(), "average row size mismatch for %s", symbol.name());
+        assertEstimateEquals(actual.getNullsFraction(), expected.getNullsFraction(), "nullsFraction mismatch for %s", symbol.getName());
+        assertEstimateEquals(actual.getLowValue(), expected.getLowValue(), "lowValue mismatch for %s", symbol.getName());
+        assertEstimateEquals(actual.getHighValue(), expected.getHighValue(), "highValue mismatch for %s", symbol.getName());
+        assertEstimateEquals(actual.getDistinctValuesCount(), expected.getDistinctValuesCount(), "distinct values count mismatch for %s", symbol.getName());
+        assertEstimateEquals(actual.getAverageRowSize(), expected.getAverageRowSize(), "average row size mismatch for %s", symbol.getName());
     }
 }

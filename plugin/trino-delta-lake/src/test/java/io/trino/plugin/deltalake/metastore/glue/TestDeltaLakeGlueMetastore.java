@@ -202,10 +202,10 @@ public class TestDeltaLakeGlueMetastore
         DeltaLakeMetadata metadata = metadataFactory.create(SESSION.getIdentity());
 
         // Verify the tables were created as non Delta Lake tables
-        assertThatThrownBy(() -> metadata.getTableHandle(session, nonDeltaLakeTable1, Optional.empty(), Optional.empty()))
+        assertThatThrownBy(() -> metadata.getTableHandle(session, nonDeltaLakeTable1))
                 .isInstanceOf(TrinoException.class)
                 .hasMessage(format("%s is not a Delta Lake table", nonDeltaLakeTable1));
-        assertThatThrownBy(() -> metadata.getTableHandle(session, nonDeltaLakeTable2, Optional.empty(), Optional.empty()))
+        assertThatThrownBy(() -> metadata.getTableHandle(session, nonDeltaLakeTable2))
                 .isInstanceOf(TrinoException.class)
                 .hasMessage(format("%s is not a Delta Lake table", nonDeltaLakeTable2));
 

@@ -54,7 +54,7 @@ public class ConsistentHashingHostAddressProvider
             .build();
 
     @Inject
-    public ConsistentHashingHostAddressProvider(NodeManager nodeManager, ConsistentHashingHostAddressProviderConfig configuration)
+    public ConsistentHashingHostAddressProvider(NodeManager nodeManager, ConsistentHashingHostAddressProviderConfiguration configuration)
     {
         this.nodeManager = requireNonNull(nodeManager, "nodeManager is null");
         this.replicationFactor = configuration.getPreferredHostsCount();

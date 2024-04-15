@@ -158,7 +158,7 @@ public final class SortExpressionExtractor
         public BuildSymbolReferenceFinder(Set<Symbol> buildSymbols)
         {
             this.buildSymbols = buildSymbols.stream()
-                    .map(Symbol::name)
+                    .map(Symbol::getName)
                     .collect(toImmutableSet());
         }
 

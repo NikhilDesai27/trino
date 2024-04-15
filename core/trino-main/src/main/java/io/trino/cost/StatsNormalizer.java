@@ -93,7 +93,7 @@ public class StatsNormalizer
         double distinctValuesCount = symbolStats.getDistinctValuesCount();
 
         if (!isNaN(distinctValuesCount)) {
-            double maxDistinctValuesByLowHigh = maxDistinctValuesByLowHigh(symbolStats, symbol.type());
+            double maxDistinctValuesByLowHigh = maxDistinctValuesByLowHigh(symbolStats, symbol.getType());
             if (distinctValuesCount > maxDistinctValuesByLowHigh) {
                 distinctValuesCount = maxDistinctValuesByLowHigh;
             }
@@ -127,7 +127,7 @@ public class StatsNormalizer
         double nullsFraction = symbolStats.getNullsFraction();
 
         if (!isNaN(distinctValuesCount)) {
-            double maxDistinctValuesByLowHigh = maxDistinctValuesByLowHigh(symbolStats, symbol.type());
+            double maxDistinctValuesByLowHigh = maxDistinctValuesByLowHigh(symbolStats, symbol.getType());
             if (distinctValuesCount > maxDistinctValuesByLowHigh) {
                 distinctValuesCount = maxDistinctValuesByLowHigh;
             }

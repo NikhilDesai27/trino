@@ -101,18 +101,18 @@ public class BigQuerySplitManager
         BigQueryTableHandle bigQueryTableHandle = (BigQueryTableHandle) table;
 
         int actualParallelism = parallelism.orElseGet(() -> nodeManager.getRequiredWorkerNodes().size());
-        TupleDomain<ColumnHandle> tableConstraint = bigQueryTableHandle.constraint();
+        TupleDomain<ColumnHandle> tableConstraint = bigQueryTableHandle.getConstraint();
         Optional<String> filter = BigQueryFilterQueryBuilder.buildFilter(tableConstraint);
 
         if (!bigQueryTableHandle.isNamedRelation()) {
-            List<BigQueryColumnHandle> columns = bigQueryTableHandle.projectedColumns().orElse(ImmutableList.of());
+            List<BigQueryColumnHandle> columns = bigQueryTableHandle.getProjectedColumns().orElse(ImmutableList.of());
             return new FixedSplitSource(BigQuerySplit.forViewStream(columns, filter));
         }
 
         TableId remoteTableId = bigQueryTableHandle.asPlainTable().getRemoteTableName().toTableId();
-        List<BigQuerySplit> splits = emptyProjectionIsRequired(bigQueryTableHandle.projectedColumns()) ?
+        List<BigQuerySplit> splits = emptyProjectionIsRequired(bigQueryTableHandle.getProjectedColumns()) ?
                 createEmptyProjection(session, remoteTableId, actualParallelism, filter) :
-                readFromBigQuery(session, TableDefinition.Type.valueOf(bigQueryTableHandle.asPlainTable().getType()), remoteTableId, bigQueryTableHandle.projectedColumns(), actualParallelism, tableConstraint);
+                readFromBigQuery(session, TableDefinition.Type.valueOf(bigQueryTableHandle.asPlainTable().getType()), remoteTableId, bigQueryTableHandle.getProjectedColumns(), actualParallelism, tableConstraint);
         return new FixedSplitSource(splits);
     }
 
@@ -128,22 +128,22 @@ public class BigQuerySplitManager
 
         log.debug("readFromBigQuery(tableId=%s, projectedColumns=%s, actualParallelism=%s, filter=[%s])", remoteTableId, projectedColumns, actualParallelism, filter);
         List<BigQueryColumnHandle> columns = projectedColumns.get();
-        List<String> projectedColumnsNames = new ArrayList<>(columns.stream().map(BigQueryColumnHandle::name).toList());
+        List<String> projectedColumnsNames = new ArrayList<>(columns.stream().map(BigQueryColumnHandle::getName).toList());
 
         if (isWildcardTable(type, remoteTableId.getTable())) {
             // Storage API doesn't support reading wildcard tables
             return ImmutableList.of(BigQuerySplit.forViewStream(columns, filter));
         }
-        if (type == EXTERNAL) {
-            // Storage API doesn't support reading external tables
+        if (type == MATERIALIZED_VIEW || type == EXTERNAL) {
+            // Storage API doesn't support reading materialized views and external tables
             return ImmutableList.of(BigQuerySplit.forViewStream(columns, filter));
         }
-        if (type == VIEW || type == MATERIALIZED_VIEW) {
+        if (type == VIEW) {
             if (isSkipViewMaterialization(session)) {
                 return ImmutableList.of(BigQuerySplit.forViewStream(columns, filter));
             }
             tableConstraint.getDomains().ifPresent(domains -> domains.keySet().stream()
-                    .map(column -> ((BigQueryColumnHandle) column).name())
+                    .map(column -> ((BigQueryColumnHandle) column).getName())
                     .filter(columnName -> !projectedColumnsNames.contains(columnName))
                     .forEach(projectedColumnsNames::add));
         }

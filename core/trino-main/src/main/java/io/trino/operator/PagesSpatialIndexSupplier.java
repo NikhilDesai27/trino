@@ -38,7 +38,6 @@ import org.locationtech.jts.index.strtree.STRtree;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Verify.verifyNotNull;
@@ -64,7 +63,6 @@ public class PagesSpatialIndexSupplier
     private final List<Integer> outputChannels;
     private final List<ObjectArrayList<Block>> channels;
     private final Optional<Integer> radiusChannel;
-    private final OptionalDouble constantRadius;
     private final SpatialPredicate spatialRelationshipTest;
     private final Optional<JoinFilterFunctionCompiler.JoinFilterFunctionFactory> filterFunctionFactory;
     private final STRtree rtree;
@@ -79,7 +77,6 @@ public class PagesSpatialIndexSupplier
             List<ObjectArrayList<Block>> channels,
             int geometryChannel,
             Optional<Integer> radiusChannel,
-            OptionalDouble constantRadius,
             Optional<Integer> partitionChannel,
             SpatialPredicate spatialRelationshipTest,
             Optional<JoinFilterFunctionCompiler.JoinFilterFunctionFactory> filterFunctionFactory,
@@ -94,14 +91,13 @@ public class PagesSpatialIndexSupplier
         this.filterFunctionFactory = filterFunctionFactory;
         this.partitions = partitions;
 
-        this.rtree = buildRTree(addresses, channels, geometryChannel, radiusChannel, constantRadius, partitionChannel);
+        this.rtree = buildRTree(addresses, channels, geometryChannel, radiusChannel, partitionChannel);
         this.radiusChannel = radiusChannel;
-        this.constantRadius = constantRadius;
         this.memorySizeInBytes = INSTANCE_SIZE +
                 (rtree.isEmpty() ? 0 : STRTREE_INSTANCE_SIZE + computeMemorySizeInBytes(rtree.getRoot()));
     }
 
-    private static STRtree buildRTree(LongArrayList addresses, List<ObjectArrayList<Block>> channels, int geometryChannel, Optional<Integer> radiusChannel, OptionalDouble constantRadius, Optional<Integer> partitionChannel)
+    private static STRtree buildRTree(LongArrayList addresses, List<ObjectArrayList<Block>> channels, int geometryChannel, Optional<Integer> radiusChannel, Optional<Integer> partitionChannel)
     {
         STRtree rtree = new STRtree();
         Operator relateOperator = OperatorFactoryLocal.getInstance().getOperator(Operator.Type.Relate);
@@ -125,20 +121,13 @@ public class PagesSpatialIndexSupplier
                 continue;
             }
 
-            double radius = 0.0;
-            if (constantRadius.isPresent()) {
-                radius = constantRadius.getAsDouble();
-            }
-            else if (radiusChannel.isPresent()) {
-                radius = DOUBLE.getDouble(channels.get(radiusChannel.get()).get(blockIndex), blockPosition);
-            }
-
+            double radius = radiusChannel.map(channel -> DOUBLE.getDouble(channels.get(channel).get(blockIndex), blockPosition)).orElse(0.0);
             if (radius < 0) {
                 continue;
             }
 
-            if (radiusChannel.isEmpty() && constantRadius.isEmpty()) {
-                // If radius is supplied, this is a distance query, for which our acceleration won't help.
+            if (radiusChannel.isEmpty()) {
+                // If radiusChannel is supplied, this is a distance query, for which our acceleration won't help.
                 accelerateGeometry(ogcGeometry, relateOperator);
             }
 
@@ -201,6 +190,6 @@ public class PagesSpatialIndexSupplier
         if (rtree.isEmpty()) {
             return EMPTY_INDEX;
         }
-        return new PagesRTreeIndex(session, addresses, types, outputChannels, channels, rtree, radiusChannel, constantRadius, spatialRelationshipTest, filterFunctionFactory, partitions);
+        return new PagesRTreeIndex(session, addresses, types, outputChannels, channels, rtree, radiusChannel, spatialRelationshipTest, filterFunctionFactory, partitions);
     }
 }

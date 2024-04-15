@@ -137,7 +137,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "measure"))))
+                                        new Symbol(UNKNOWN, "measure"))))
                         .rowsPerMatch(ALL_SHOW_EMPTY)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -160,7 +160,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "function"))))
+                                        new Symbol(UNKNOWN, "function"))))
                         .rowsPerMatch(WINDOW)
                         .frame(new WindowNode.Frame(ROWS, CURRENT_ROW, Optional.empty(), Optional.empty(), UNBOUNDED_FOLLOWING, Optional.empty(), Optional.empty()))
                         .pattern(new IrLabel("X"))
@@ -223,7 +223,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "measure"))))
+                                        new Symbol(UNKNOWN, "measure"))))
                         .rowsPerMatch(ALL_SHOW_EMPTY)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -248,7 +248,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "renamed"))))
+                                        new Symbol(UNKNOWN, "renamed"))))
                         .rowsPerMatch(ALL_SHOW_EMPTY)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -273,7 +273,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "projected"))))
+                                        new Symbol(UNKNOWN, "projected"))))
                         .rowsPerMatch(ALL_SHOW_EMPTY)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -305,7 +305,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "b"))))
+                                        new Symbol(UNKNOWN, "b"))))
                         .addWindowFunction(p.symbol("parent_function"), new WindowNode.Function(lag, ImmutableList.of(p.symbol("a").toSymbolReference()), DEFAULT_FRAME, false))
                         .rowsPerMatch(WINDOW)
                         .frame(new WindowNode.Frame(ROWS, CURRENT_ROW, Optional.empty(), Optional.empty(), UNBOUNDED_FOLLOWING, Optional.empty(), Optional.empty()))
@@ -323,7 +323,7 @@ public class TestMergePatternRecognitionNodes
                                             new Reference(BIGINT, "pointer"),
                                             ImmutableMap.of("pointer", new ScalarValuePointer(
                                                     new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                    new Symbol(BIGINT, "a"))))
+                                                    new Symbol(UNKNOWN, "a"))))
                                     .addWindowFunction(p.symbol("child_function"), new WindowNode.Function(lag, ImmutableList.of(p.symbol("b").toSymbolReference()), DEFAULT_FRAME, false))
                                     .rowsPerMatch(WINDOW)
                                     .frame(new WindowNode.Frame(ROWS, CURRENT_ROW, Optional.empty(), Optional.empty(), UNBOUNDED_FOLLOWING, Optional.empty(), Optional.empty()))
@@ -342,14 +342,14 @@ public class TestMergePatternRecognitionNodes
                                                 new Reference(BIGINT, "pointer"),
                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                                        new Symbol(BIGINT, "b"))),
+                                                        new Symbol(UNKNOWN, "b"))),
                                                 BIGINT)
                                         .addMeasure(
                                                 "child_measure",
                                                 new Reference(BIGINT, "pointer"),
                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                        new Symbol(BIGINT, "a"))),
+                                                        new Symbol(UNKNOWN, "a"))),
                                                 BIGINT)
                                         .addFunction("parent_function", windowFunction("lag", ImmutableList.of("a"), DEFAULT_FRAME))
                                         .addFunction("child_function", windowFunction("lag", ImmutableList.of("b"), DEFAULT_FRAME))
@@ -376,7 +376,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "b"))))
+                                        new Symbol(UNKNOWN, "b"))))
                         .rowsPerMatch(ONE)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -388,7 +388,7 @@ public class TestMergePatternRecognitionNodes
                                             new Reference(BIGINT, "pointer"),
                                             ImmutableMap.of("pointer", new ScalarValuePointer(
                                                     new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                    new Symbol(BIGINT, "a"))))
+                                                    new Symbol(UNKNOWN, "a"))))
                                     .rowsPerMatch(ONE)
                                     .pattern(new IrLabel("X"))
                                     .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -406,14 +406,14 @@ public class TestMergePatternRecognitionNodes
                                                         new Reference(BIGINT, "pointer"),
                                                         ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                 new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                                                new Symbol(BIGINT, "b"))),
+                                                                new Symbol(UNKNOWN, "b"))),
                                                         BIGINT)
                                                 .addMeasure(
                                                         "child_measure",
                                                         new Reference(BIGINT, "pointer"),
                                                         ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                 new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                                new Symbol(BIGINT, "a"))),
+                                                                new Symbol(UNKNOWN, "a"))),
                                                         BIGINT)
                                                 .rowsPerMatch(ONE)
                                                 .pattern(new IrLabel("X"))
@@ -433,7 +433,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "a"))))
+                                        new Symbol(UNKNOWN, "a"))))
                         .rowsPerMatch(ALL_SHOW_EMPTY)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -448,7 +448,7 @@ public class TestMergePatternRecognitionNodes
                                                     new Reference(BIGINT, "pointer"),
                                                     ImmutableMap.of("pointer", new ScalarValuePointer(
                                                             new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                            new Symbol(BIGINT, "b"))))
+                                                            new Symbol(UNKNOWN, "b"))))
                                             .rowsPerMatch(ALL_SHOW_EMPTY)
                                             .pattern(new IrLabel("X"))
                                             .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -473,14 +473,14 @@ public class TestMergePatternRecognitionNodes
                                                                 new Reference(BIGINT, "pointer"),
                                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                                                        new Symbol(BIGINT, "a"))),
+                                                                        new Symbol(UNKNOWN, "a"))),
                                                                 BIGINT)
                                                         .addMeasure(
                                                                 "child_measure",
                                                                 new Reference(BIGINT, "pointer"),
                                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                                        new Symbol(BIGINT, "b"))),
+                                                                        new Symbol(UNKNOWN, "b"))),
                                                                 BIGINT)
                                                         .rowsPerMatch(ALL_SHOW_EMPTY)
                                                         .pattern(new IrLabel("X"))
@@ -496,7 +496,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "a"))))
+                                        new Symbol(UNKNOWN, "a"))))
                         .rowsPerMatch(ALL_SHOW_EMPTY)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -511,7 +511,7 @@ public class TestMergePatternRecognitionNodes
                                                     new Reference(BIGINT, "pointer"),
                                                     ImmutableMap.of("pointer", new ScalarValuePointer(
                                                             new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                            new Symbol(BIGINT, "b"))))
+                                                            new Symbol(UNKNOWN, "b"))))
                                             .rowsPerMatch(ALL_SHOW_EMPTY)
                                             .pattern(new IrLabel("X"))
                                             .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -536,14 +536,14 @@ public class TestMergePatternRecognitionNodes
                                                                 new Reference(BIGINT, "pointer"),
                                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                                                        new Symbol(BIGINT, "a"))),
+                                                                        new Symbol(UNKNOWN, "a"))),
                                                                 BIGINT)
                                                         .addMeasure(
                                                                 "child_measure",
                                                                 new Reference(BIGINT, "pointer"),
                                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                                        new Symbol(BIGINT, "b"))),
+                                                                        new Symbol(UNKNOWN, "b"))),
                                                                 BIGINT)
                                                         .rowsPerMatch(ALL_SHOW_EMPTY)
                                                         .pattern(new IrLabel("X"))
@@ -564,7 +564,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "expression_1"))))
+                                        new Symbol(UNKNOWN, "expression_1"))))
                         .rowsPerMatch(ALL_SHOW_EMPTY)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -581,7 +581,7 @@ public class TestMergePatternRecognitionNodes
                                                     new Reference(BIGINT, "pointer"),
                                                     ImmutableMap.of("pointer", new ScalarValuePointer(
                                                             new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                            new Symbol(BIGINT, "b"))))
+                                                            new Symbol(UNKNOWN, "b"))))
                                             .rowsPerMatch(ALL_SHOW_EMPTY)
                                             .pattern(new IrLabel("X"))
                                             .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -609,14 +609,14 @@ public class TestMergePatternRecognitionNodes
                                                                 new Reference(BIGINT, "pointer"),
                                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                                                        new Symbol(BIGINT, "expression_1"))),
+                                                                        new Symbol(UNKNOWN, "expression_1"))),
                                                                 BIGINT)
                                                         .addMeasure(
                                                                 "child_measure",
                                                                 new Reference(BIGINT, "pointer"),
                                                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                                        new Symbol(BIGINT, "b"))),
+                                                                        new Symbol(UNKNOWN, "b"))),
                                                                 BIGINT)
                                                         .rowsPerMatch(ALL_SHOW_EMPTY)
                                                         .pattern(new IrLabel("X"))
@@ -644,7 +644,7 @@ public class TestMergePatternRecognitionNodes
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "expression_1"))))
+                                        new Symbol(UNKNOWN, "expression_1"))))
                         .rowsPerMatch(ONE)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
@@ -663,7 +663,7 @@ public class TestMergePatternRecognitionNodes
                                                     new Reference(BIGINT, "pointer"),
                                                     ImmutableMap.of("pointer", new ScalarValuePointer(
                                                             new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), false, true, 0, 0),
-                                                            new Symbol(BIGINT, "b"))))
+                                                            new Symbol(UNKNOWN, "b"))))
                                             .rowsPerMatch(ONE)
                                             .pattern(new IrLabel("X"))
                                             .addVariableDefinition(new IrLabel("X"), TRUE)

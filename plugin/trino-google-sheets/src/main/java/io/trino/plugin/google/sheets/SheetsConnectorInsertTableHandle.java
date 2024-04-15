@@ -13,6 +13,8 @@
  */
 package io.trino.plugin.google.sheets;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import io.trino.spi.connector.ConnectorInsertTableHandle;
 
@@ -20,14 +22,30 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-public record SheetsConnectorInsertTableHandle(
-        String tableName,
-        List<SheetsColumnHandle> columns)
+public class SheetsConnectorInsertTableHandle
         implements ConnectorInsertTableHandle
 {
-    public SheetsConnectorInsertTableHandle
+    private final String tableName;
+    private final List<SheetsColumnHandle> columns;
+
+    @JsonCreator
+    public SheetsConnectorInsertTableHandle(
+            @JsonProperty("tableName") String tableName,
+            @JsonProperty("columns") List<SheetsColumnHandle> columns)
     {
-        requireNonNull(tableName, "tableName is null");
-        columns = ImmutableList.copyOf(requireNonNull(columns, "columns is null"));
+        this.tableName = requireNonNull(tableName, "tableName is null");
+        this.columns = ImmutableList.copyOf(requireNonNull(columns, "columns is null"));
+    }
+
+    @JsonProperty
+    public String getTableName()
+    {
+        return tableName;
+    }
+
+    @JsonProperty
+    public List<SheetsColumnHandle> getColumns()
+    {
+        return columns;
     }
 }

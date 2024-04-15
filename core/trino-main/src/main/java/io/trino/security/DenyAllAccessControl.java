@@ -17,7 +17,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.trino.metadata.QualifiedObjectName;
-import io.trino.spi.QueryId;
 import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.EntityKindAndName;
@@ -132,7 +131,7 @@ public class DenyAllAccessControl
     }
 
     @Override
-    public void checkCanExecuteQuery(Identity identity, QueryId queryId)
+    public void checkCanExecuteQuery(Identity identity)
     {
         denyExecuteQuery();
     }
@@ -456,7 +455,7 @@ public class DenyAllAccessControl
     }
 
     @Override
-    public void checkCanSetSystemSessionProperty(Identity identity, QueryId queryId, String propertyName)
+    public void checkCanSetSystemSessionProperty(Identity identity, String propertyName)
     {
         denySetSystemSessionProperty(propertyName);
     }

@@ -537,7 +537,7 @@ class RelationPlanner
                 // note: hidden columns are included. They are present in sourcePlan.fieldMappings
                 outputSymbols.addAll(sourcePlan.getFieldMappings());
                 Set<Symbol> partitionBy = specification
-                        .map(DataOrganizationSpecification::partitionBy)
+                        .map(DataOrganizationSpecification::getPartitionBy)
                         .map(ImmutableSet::copyOf)
                         .orElse(ImmutableSet.of());
                 sourcePlan.getFieldMappings().stream()
@@ -628,7 +628,7 @@ class RelationPlanner
         boolean oneRowOutput = rowsPerMatch.isOneRow();
 
         DataOrganizationSpecification specification = planWindowSpecification(node.getPartitionBy(), node.getOrderBy(), planBuilder::translate);
-        outputLayout.addAll(specification.partitionBy());
+        outputLayout.addAll(specification.getPartitionBy());
         if (!oneRowOutput) {
             getSortItemsFromOrderBy(node.getOrderBy()).stream()
                     .map(SortItem::getSortKey)
@@ -1460,7 +1460,7 @@ class RelationPlanner
                 defaultErrorOnError,
                 parametersType,
                 properOutputs.stream()
-                        .map(Symbol::type)
+                        .map(Symbol::getType)
                         .toArray(Type[]::new));
 
         TableFunctionNode tableFunctionNode = new TableFunctionNode(
@@ -1715,7 +1715,7 @@ class RelationPlanner
         // The node is an intermediate stage of planning json_table. There's no recorded relation type available for this node.
         // The returned RowType is only used in plan printer
         return RowType.from(node.getOutputSymbols().stream()
-                .map(symbol -> new RowType.Field(Optional.of(symbol.name()), symbol.type()))
+                .map(symbol -> new RowType.Field(Optional.of(symbol.getName()), symbol.getType()))
                 .collect(toImmutableList()));
     }
 

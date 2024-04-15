@@ -55,30 +55,20 @@ import static io.trino.sql.analyzer.RegexLibrary.JONI;
         "deprecated.legacy-unnest-array-rows",
         "deprecated.legacy-update-delete-implementation",
         "experimental-syntax-enabled",
-        "experimental.aggregation-operator-unspill-memory-limit",
-        "experimental.filter-and-project-min-output-page-row-count",
-        "experimental.filter-and-project-min-output-page-size",
-        "experimental.late-materialization.enabled",
-        "experimental.memory-revoking-target",
-        "experimental.memory-revoking-threshold",
         "experimental.resource-groups-enabled",
-        "experimental.spill-enabled",
-        "experimental.spill-order-by",
-        "experimental.spill-window-operator",
-        "experimental.spiller-max-used-space-threshold",
-        "experimental.spiller-spill-path",
-        "experimental.spiller-threads",
         "fast-inequality-joins",
         "histogram.implementation",
-        "legacy.allow-set-view-authorization",
-        "legacy.materialized-view-grace-period",
         "multimapagg.implementation",
         "optimizer.iterative-rule-based-column-pruning",
         "optimizer.processing-optimization",
-        "parse-decimal-literals-as-double",
         "resource-group-manager",
         "spill-order-by",
+        "experimental.spill-order-by",
         "spill-window-operator",
+        "experimental.spill-window-operator",
+        "legacy.allow-set-view-authorization",
+        "parse-decimal-literals-as-double",
+        "experimental.late-materialization.enabled"
 })
 public class FeaturesConfig
 {
@@ -116,6 +106,7 @@ public class FeaturesConfig
     private boolean legacyCatalogRoles;
     private boolean incrementalHashArrayLoadFactorEnabled = true;
 
+    private boolean legacyMaterializedViewGracePeriod;
     private boolean hideInaccessibleColumns;
     private boolean forceSpillingJoin;
 
@@ -229,13 +220,13 @@ public class FeaturesConfig
         return this;
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public RegexLibrary getRegexLibrary()
     {
         return regexLibrary;
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @Config("deprecated.regex-library")
     @LegacyConfig("regex-library")
     public FeaturesConfig setRegexLibrary(RegexLibrary regexLibrary)
@@ -250,6 +241,7 @@ public class FeaturesConfig
     }
 
     @Config("spill-enabled")
+    @LegacyConfig("experimental.spill-enabled")
     public FeaturesConfig setSpillEnabled(boolean spillEnabled)
     {
         this.spillEnabled = spillEnabled;
@@ -262,6 +254,7 @@ public class FeaturesConfig
     }
 
     @Config("aggregation-operator-unspill-memory-limit")
+    @LegacyConfig("experimental.aggregation-operator-unspill-memory-limit")
     public FeaturesConfig setAggregationOperatorUnspillMemoryLimit(DataSize aggregationOperatorUnspillMemoryLimit)
     {
         this.aggregationOperatorUnspillMemoryLimit = aggregationOperatorUnspillMemoryLimit;
@@ -274,6 +267,7 @@ public class FeaturesConfig
     }
 
     @Config("spiller-spill-path")
+    @LegacyConfig("experimental.spiller-spill-path")
     public FeaturesConfig setSpillerSpillPaths(String spillPaths)
     {
         List<String> spillPathsSplit = ImmutableList.copyOf(Splitter.on(",").trimResults().omitEmptyStrings().split(spillPaths));
@@ -288,6 +282,7 @@ public class FeaturesConfig
     }
 
     @Config("spiller-threads")
+    @LegacyConfig("experimental.spiller-threads")
     public FeaturesConfig setSpillerThreads(int spillerThreads)
     {
         this.spillerThreads = spillerThreads;
@@ -302,6 +297,7 @@ public class FeaturesConfig
     }
 
     @Config("memory-revoking-threshold")
+    @LegacyConfig("experimental.memory-revoking-threshold")
     @ConfigDescription("Revoke memory when memory pool is filled over threshold")
     public FeaturesConfig setMemoryRevokingThreshold(double memoryRevokingThreshold)
     {
@@ -317,6 +313,7 @@ public class FeaturesConfig
     }
 
     @Config("memory-revoking-target")
+    @LegacyConfig("experimental.memory-revoking-target")
     @ConfigDescription("When revoking memory, try to revoke so much that pool is filled below target at the end")
     public FeaturesConfig setMemoryRevokingTarget(double memoryRevokingTarget)
     {
@@ -330,6 +327,7 @@ public class FeaturesConfig
     }
 
     @Config("spiller-max-used-space-threshold")
+    @LegacyConfig("experimental.spiller-max-used-space-threshold")
     public FeaturesConfig setSpillMaxUsedSpaceThreshold(double spillMaxUsedSpaceThreshold)
     {
         this.spillMaxUsedSpaceThreshold = spillMaxUsedSpaceThreshold;
@@ -388,6 +386,7 @@ public class FeaturesConfig
     }
 
     @Config("filter-and-project-min-output-page-size")
+    @LegacyConfig("experimental.filter-and-project-min-output-page-size")
     public FeaturesConfig setFilterAndProjectMinOutputPageSize(DataSize filterAndProjectMinOutputPageSize)
     {
         this.filterAndProjectMinOutputPageSize = filterAndProjectMinOutputPageSize;
@@ -401,6 +400,7 @@ public class FeaturesConfig
     }
 
     @Config("filter-and-project-min-output-page-row-count")
+    @LegacyConfig("experimental.filter-and-project-min-output-page-row-count")
     public FeaturesConfig setFilterAndProjectMinOutputPageRowCount(int filterAndProjectMinOutputPageRowCount)
     {
         this.filterAndProjectMinOutputPageRowCount = filterAndProjectMinOutputPageRowCount;
@@ -457,6 +457,21 @@ public class FeaturesConfig
     public FeaturesConfig setIncrementalHashArrayLoadFactorEnabled(boolean incrementalHashArrayLoadFactorEnabled)
     {
         this.incrementalHashArrayLoadFactorEnabled = incrementalHashArrayLoadFactorEnabled;
+        return this;
+    }
+
+    @Deprecated
+    public boolean isLegacyMaterializedViewGracePeriod()
+    {
+        return legacyMaterializedViewGracePeriod;
+    }
+
+    @Deprecated
+    @Config("legacy.materialized-view-grace-period")
+    @ConfigDescription("Enable legacy handling of stale materialized views")
+    public FeaturesConfig setLegacyMaterializedViewGracePeriod(boolean legacyMaterializedViewGracePeriod)
+    {
+        this.legacyMaterializedViewGracePeriod = legacyMaterializedViewGracePeriod;
         return this;
     }
 

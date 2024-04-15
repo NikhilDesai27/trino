@@ -1110,19 +1110,19 @@ public class IcebergMetadata
         ImmutableSet.Builder<String> writtenFiles = ImmutableSet.builder();
         for (CommitTaskData task : commitTasks) {
             DataFiles.Builder builder = DataFiles.builder(icebergTable.spec())
-                    .withPath(task.path())
-                    .withFileSizeInBytes(task.fileSizeInBytes())
+                    .withPath(task.getPath())
+                    .withFileSizeInBytes(task.getFileSizeInBytes())
                     .withFormat(table.getFileFormat().toIceberg())
-                    .withMetrics(task.metrics().metrics());
+                    .withMetrics(task.getMetrics().metrics());
 
             if (!icebergTable.spec().fields().isEmpty()) {
-                String partitionDataJson = task.partitionDataJson()
+                String partitionDataJson = task.getPartitionDataJson()
                         .orElseThrow(() -> new VerifyException("No partition data for partitioned table"));
                 builder.withPartition(PartitionData.fromJson(partitionDataJson, partitionColumnTypes));
             }
 
             appendFiles.appendFile(builder.build());
-            writtenFiles.add(task.path());
+            writtenFiles.add(task.getPath());
         }
 
         // try to leave as little garbage as possible behind
@@ -1166,7 +1166,7 @@ public class IcebergMetadata
         }
 
         return Optional.of(new HiveWrittenPartitions(commitTasks.stream()
-                .map(CommitTaskData::path)
+                .map(CommitTaskData::getPath)
                 .collect(toImmutableList())));
     }
 
@@ -1352,7 +1352,7 @@ public class IcebergMetadata
     public Optional<ConnectorTableLayout> getLayoutForTableExecute(ConnectorSession session, ConnectorTableExecuteHandle tableExecuteHandle)
     {
         IcebergTableExecuteHandle executeHandle = (IcebergTableExecuteHandle) tableExecuteHandle;
-        switch (executeHandle.procedureId()) {
+        switch (executeHandle.getProcedureId()) {
             case OPTIMIZE:
                 return getLayoutForOptimize(session, executeHandle);
             case DROP_EXTENDED_STATS:
@@ -1360,12 +1360,12 @@ public class IcebergMetadata
             case REMOVE_ORPHAN_FILES:
                 // handled via executeTableExecute
         }
-        throw new IllegalArgumentException("Unknown procedure '" + executeHandle.procedureId() + "'");
+        throw new IllegalArgumentException("Unknown procedure '" + executeHandle.getProcedureId() + "'");
     }
 
     private Optional<ConnectorTableLayout> getLayoutForOptimize(ConnectorSession session, IcebergTableExecuteHandle executeHandle)
     {
-        Table icebergTable = catalog.loadTable(session, executeHandle.schemaTableName());
+        Table icebergTable = catalog.loadTable(session, executeHandle.getSchemaTableName());
         // from performance perspective it is better to have lower number of bigger files than other way around
         // thus we force repartitioning for optimize to achieve this
         return getWriteLayout(icebergTable.schema(), icebergTable.spec(), true);
@@ -1379,7 +1379,7 @@ public class IcebergMetadata
     {
         IcebergTableExecuteHandle executeHandle = (IcebergTableExecuteHandle) tableExecuteHandle;
         IcebergTableHandle table = (IcebergTableHandle) updatedSourceTableHandle;
-        switch (executeHandle.procedureId()) {
+        switch (executeHandle.getProcedureId()) {
             case OPTIMIZE:
                 return beginOptimize(session, executeHandle, table);
             case DROP_EXTENDED_STATS:
@@ -1387,7 +1387,7 @@ public class IcebergMetadata
             case REMOVE_ORPHAN_FILES:
                 // handled via executeTableExecute
         }
-        throw new IllegalArgumentException("Unknown procedure '" + executeHandle.procedureId() + "'");
+        throw new IllegalArgumentException("Unknown procedure '" + executeHandle.getProcedureId() + "'");
     }
 
     private BeginTableExecuteResult<ConnectorTableExecuteHandle, ConnectorTableHandle> beginOptimize(
@@ -1395,7 +1395,7 @@ public class IcebergMetadata
             IcebergTableExecuteHandle executeHandle,
             IcebergTableHandle table)
     {
-        IcebergOptimizeHandle optimizeHandle = (IcebergOptimizeHandle) executeHandle.procedureHandle();
+        IcebergOptimizeHandle optimizeHandle = (IcebergOptimizeHandle) executeHandle.getProcedureHandle();
         Table icebergTable = catalog.loadTable(session, table.getSchemaTableName());
 
         validateNotModifyingOldSnapshot(table, icebergTable);
@@ -1415,14 +1415,14 @@ public class IcebergMetadata
 
         return new BeginTableExecuteResult<>(
                 executeHandle,
-                table.forOptimize(true, optimizeHandle.maxScannedFileSize()));
+                table.forOptimize(true, optimizeHandle.getMaxScannedFileSize()));
     }
 
     @Override
     public void finishTableExecute(ConnectorSession session, ConnectorTableExecuteHandle tableExecuteHandle, Collection<Slice> fragments, List<Object> splitSourceInfo)
     {
         IcebergTableExecuteHandle executeHandle = (IcebergTableExecuteHandle) tableExecuteHandle;
-        switch (executeHandle.procedureId()) {
+        switch (executeHandle.getProcedureId()) {
             case OPTIMIZE:
                 finishOptimize(session, executeHandle, fragments, splitSourceInfo);
                 return;
@@ -1431,12 +1431,12 @@ public class IcebergMetadata
             case REMOVE_ORPHAN_FILES:
                 // handled via executeTableExecute
         }
-        throw new IllegalArgumentException("Unknown procedure '" + executeHandle.procedureId() + "'");
+        throw new IllegalArgumentException("Unknown procedure '" + executeHandle.getProcedureId() + "'");
     }
 
     private void finishOptimize(ConnectorSession session, IcebergTableExecuteHandle executeHandle, Collection<Slice> fragments, List<Object> splitSourceInfo)
     {
-        IcebergOptimizeHandle optimizeHandle = (IcebergOptimizeHandle) executeHandle.procedureHandle();
+        IcebergOptimizeHandle optimizeHandle = (IcebergOptimizeHandle) executeHandle.getProcedureHandle();
         Table icebergTable = transaction.table();
         Optional<Long> beforeWriteSnapshotId = getCurrentSnapshotId(icebergTable);
 
@@ -1463,13 +1463,13 @@ public class IcebergMetadata
         Set<DataFile> newFiles = new HashSet<>();
         for (CommitTaskData task : commitTasks) {
             DataFiles.Builder builder = DataFiles.builder(icebergTable.spec())
-                    .withPath(task.path())
-                    .withFileSizeInBytes(task.fileSizeInBytes())
-                    .withFormat(optimizeHandle.fileFormat().toIceberg())
-                    .withMetrics(task.metrics().metrics());
+                    .withPath(task.getPath())
+                    .withFileSizeInBytes(task.getFileSizeInBytes())
+                    .withFormat(optimizeHandle.getFileFormat().toIceberg())
+                    .withMetrics(task.getMetrics().metrics());
 
             if (!icebergTable.spec().fields().isEmpty()) {
-                String partitionDataJson = task.partitionDataJson()
+                String partitionDataJson = task.getPartitionDataJson()
                         .orElseThrow(() -> new VerifyException("No partition data for partitioned table"));
                 builder.withPartition(PartitionData.fromJson(partitionDataJson, partitionColumnTypes));
             }
@@ -1477,14 +1477,14 @@ public class IcebergMetadata
             newFiles.add(builder.build());
         }
 
-        if (optimizeHandle.snapshotId().isEmpty() || scannedDataFiles.isEmpty() && fullyAppliedDeleteFiles.isEmpty() && newFiles.isEmpty()) {
+        if (optimizeHandle.getSnapshotId().isEmpty() || scannedDataFiles.isEmpty() && fullyAppliedDeleteFiles.isEmpty() && newFiles.isEmpty()) {
             // Either the table is empty, or the table scan turned out to be empty, nothing to commit
             transaction = null;
             return;
         }
 
         // try to leave as little garbage as possible behind
-        if (optimizeHandle.retriesEnabled()) {
+        if (optimizeHandle.isRetriesEnabled()) {
             cleanExtraOutputFiles(
                     session,
                     newFiles.stream()
@@ -1495,7 +1495,7 @@ public class IcebergMetadata
         RewriteFiles rewriteFiles = transaction.newRewrite();
         rewriteFiles.rewriteFiles(scannedDataFiles, fullyAppliedDeleteFiles, newFiles, ImmutableSet.of());
         // Table.snapshot method returns null if there is no matching snapshot
-        Snapshot snapshot = requireNonNull(icebergTable.snapshot(optimizeHandle.snapshotId().get()), "snapshot is null");
+        Snapshot snapshot = requireNonNull(icebergTable.snapshot(optimizeHandle.getSnapshotId().get()), "snapshot is null");
         rewriteFiles.validateFromSnapshot(snapshot.snapshotId());
         commit(rewriteFiles, session);
         transaction.commitTransaction();
@@ -1509,7 +1509,7 @@ public class IcebergMetadata
                 verify(previous != newSnapshotId, "Failed to get new snapshot ID"));
 
         try {
-            beginTransaction(catalog.loadTable(session, executeHandle.schemaTableName()));
+            beginTransaction(catalog.loadTable(session, executeHandle.getSchemaTableName()));
             Table reloadedTable = transaction.table();
             StatisticsFile newStatsFile = tableStatisticsWriter.rewriteStatisticsFile(session, reloadedTable, newSnapshotId);
 
@@ -1530,7 +1530,7 @@ public class IcebergMetadata
     public void executeTableExecute(ConnectorSession session, ConnectorTableExecuteHandle tableExecuteHandle)
     {
         IcebergTableExecuteHandle executeHandle = (IcebergTableExecuteHandle) tableExecuteHandle;
-        switch (executeHandle.procedureId()) {
+        switch (executeHandle.getProcedureId()) {
             case DROP_EXTENDED_STATS:
                 executeDropExtendedStats(session, executeHandle);
                 return;
@@ -1541,15 +1541,15 @@ public class IcebergMetadata
                 executeRemoveOrphanFiles(session, executeHandle);
                 return;
             default:
-                throw new IllegalArgumentException("Unknown procedure '" + executeHandle.procedureId() + "'");
+                throw new IllegalArgumentException("Unknown procedure '" + executeHandle.getProcedureId() + "'");
         }
     }
 
     private void executeDropExtendedStats(ConnectorSession session, IcebergTableExecuteHandle executeHandle)
     {
-        checkArgument(executeHandle.procedureHandle() instanceof IcebergDropExtendedStatsHandle, "Unexpected procedure handle %s", executeHandle.procedureHandle());
+        checkArgument(executeHandle.getProcedureHandle() instanceof IcebergDropExtendedStatsHandle, "Unexpected procedure handle %s", executeHandle.getProcedureHandle());
 
-        Table icebergTable = catalog.loadTable(session, executeHandle.schemaTableName());
+        Table icebergTable = catalog.loadTable(session, executeHandle.getSchemaTableName());
         beginTransaction(icebergTable);
         UpdateStatistics updateStatistics = transaction.updateStatistics();
         for (StatisticsFile statisticsFile : icebergTable.statisticsFiles()) {
@@ -1562,13 +1562,13 @@ public class IcebergMetadata
 
     private void executeExpireSnapshots(ConnectorSession session, IcebergTableExecuteHandle executeHandle)
     {
-        IcebergExpireSnapshotsHandle expireSnapshotsHandle = (IcebergExpireSnapshotsHandle) executeHandle.procedureHandle();
+        IcebergExpireSnapshotsHandle expireSnapshotsHandle = (IcebergExpireSnapshotsHandle) executeHandle.getProcedureHandle();
 
-        Table table = catalog.loadTable(session, executeHandle.schemaTableName());
-        Duration retention = requireNonNull(expireSnapshotsHandle.retentionThreshold(), "retention is null");
+        Table table = catalog.loadTable(session, executeHandle.getSchemaTableName());
+        Duration retention = requireNonNull(expireSnapshotsHandle.getRetentionThreshold(), "retention is null");
         validateTableExecuteParameters(
                 table,
-                executeHandle.schemaTableName(),
+                executeHandle.getSchemaTableName(),
                 EXPIRE_SNAPSHOTS.name(),
                 retention,
                 getExpireSnapshotMinRetention(session),
@@ -1643,13 +1643,13 @@ public class IcebergMetadata
 
     public void executeRemoveOrphanFiles(ConnectorSession session, IcebergTableExecuteHandle executeHandle)
     {
-        IcebergRemoveOrphanFilesHandle removeOrphanFilesHandle = (IcebergRemoveOrphanFilesHandle) executeHandle.procedureHandle();
+        IcebergRemoveOrphanFilesHandle removeOrphanFilesHandle = (IcebergRemoveOrphanFilesHandle) executeHandle.getProcedureHandle();
 
-        Table table = catalog.loadTable(session, executeHandle.schemaTableName());
-        Duration retention = requireNonNull(removeOrphanFilesHandle.retentionThreshold(), "retention is null");
+        Table table = catalog.loadTable(session, executeHandle.getSchemaTableName());
+        Duration retention = requireNonNull(removeOrphanFilesHandle.getRetentionThreshold(), "retention is null");
         validateTableExecuteParameters(
                 table,
-                executeHandle.schemaTableName(),
+                executeHandle.getSchemaTableName(),
                 REMOVE_ORPHAN_FILES.name(),
                 retention,
                 getRemoveOrphanFilesMinRetention(session),
@@ -1662,7 +1662,7 @@ public class IcebergMetadata
         }
 
         Instant expiration = session.getStart().minusMillis(retention.toMillis());
-        removeOrphanFiles(table, session, executeHandle.schemaTableName(), expiration, executeHandle.fileIoProperties());
+        removeOrphanFiles(table, session, executeHandle.getSchemaTableName(), expiration, executeHandle.getFileIoProperties());
     }
 
     private void removeOrphanFiles(Table table, ConnectorSession session, SchemaTableName schemaTableName, Instant expiration, Map<String, String> fileIoProperties)
@@ -2388,42 +2388,42 @@ public class IcebergMetadata
         ImmutableSet.Builder<String> writtenFiles = ImmutableSet.builder();
         ImmutableSet.Builder<String> referencedDataFiles = ImmutableSet.builder();
         for (CommitTaskData task : commitTasks) {
-            PartitionSpec partitionSpec = PartitionSpecParser.fromJson(schema, task.partitionSpecJson());
+            PartitionSpec partitionSpec = PartitionSpecParser.fromJson(schema, task.getPartitionSpecJson());
             Type[] partitionColumnTypes = partitionSpec.fields().stream()
                     .map(field -> field.transform().getResultType(schema.findType(field.sourceId())))
                     .toArray(Type[]::new);
-            switch (task.content()) {
+            switch (task.getContent()) {
                 case POSITION_DELETES -> {
                     FileMetadata.Builder deleteBuilder = FileMetadata.deleteFileBuilder(partitionSpec)
-                            .withPath(task.path())
-                            .withFormat(task.fileFormat().toIceberg())
+                            .withPath(task.getPath())
+                            .withFormat(task.getFileFormat().toIceberg())
                             .ofPositionDeletes()
-                            .withFileSizeInBytes(task.fileSizeInBytes())
-                            .withMetrics(task.metrics().metrics());
+                            .withFileSizeInBytes(task.getFileSizeInBytes())
+                            .withMetrics(task.getMetrics().metrics());
                     if (!partitionSpec.fields().isEmpty()) {
-                        String partitionDataJson = task.partitionDataJson()
+                        String partitionDataJson = task.getPartitionDataJson()
                                 .orElseThrow(() -> new VerifyException("No partition data for partitioned table"));
                         deleteBuilder.withPartition(PartitionData.fromJson(partitionDataJson, partitionColumnTypes));
                     }
                     rowDelta.addDeletes(deleteBuilder.build());
-                    writtenFiles.add(task.path());
-                    task.referencedDataFile().ifPresent(referencedDataFiles::add);
+                    writtenFiles.add(task.getPath());
+                    task.getReferencedDataFile().ifPresent(referencedDataFiles::add);
                 }
                 case DATA -> {
                     DataFiles.Builder builder = DataFiles.builder(partitionSpec)
-                            .withPath(task.path())
-                            .withFormat(task.fileFormat().toIceberg())
-                            .withFileSizeInBytes(task.fileSizeInBytes())
-                            .withMetrics(task.metrics().metrics());
+                            .withPath(task.getPath())
+                            .withFormat(task.getFileFormat().toIceberg())
+                            .withFileSizeInBytes(task.getFileSizeInBytes())
+                            .withMetrics(task.getMetrics().metrics());
                     if (!icebergTable.spec().fields().isEmpty()) {
-                        String partitionDataJson = task.partitionDataJson()
+                        String partitionDataJson = task.getPartitionDataJson()
                                 .orElseThrow(() -> new VerifyException("No partition data for partitioned table"));
                         builder.withPartition(PartitionData.fromJson(partitionDataJson, partitionColumnTypes));
                     }
                     rowDelta.addRows(builder.build());
-                    writtenFiles.add(task.path());
+                    writtenFiles.add(task.getPath());
                 }
-                default -> throw new UnsupportedOperationException("Unsupported task content: " + task.content());
+                default -> throw new UnsupportedOperationException("Unsupported task content: " + task.getContent());
             }
         }
 
@@ -2801,12 +2801,7 @@ public class IcebergMetadata
                         Optional.empty()), // forAnalyze does not affect stats
                 handle -> {
                     Table icebergTable = catalog.loadTable(session, handle.getSchemaTableName());
-                    return TableStatisticsReader.getTableStatistics(
-                            typeManager,
-                            session,
-                            handle,
-                            icebergTable,
-                            fileSystemFactory.create(session.getIdentity(), icebergTable.io().properties()));
+                    return TableStatisticsReader.getTableStatistics(typeManager, session, handle, icebergTable);
                 });
     }
 
@@ -2891,19 +2886,19 @@ public class IcebergMetadata
         ImmutableSet.Builder<String> writtenFiles = ImmutableSet.builder();
         for (CommitTaskData task : commitTasks) {
             DataFiles.Builder builder = DataFiles.builder(icebergTable.spec())
-                    .withPath(task.path())
-                    .withFileSizeInBytes(task.fileSizeInBytes())
+                    .withPath(task.getPath())
+                    .withFileSizeInBytes(task.getFileSizeInBytes())
                     .withFormat(table.getFileFormat().toIceberg())
-                    .withMetrics(task.metrics().metrics());
+                    .withMetrics(task.getMetrics().metrics());
 
             if (!icebergTable.spec().fields().isEmpty()) {
-                String partitionDataJson = task.partitionDataJson()
+                String partitionDataJson = task.getPartitionDataJson()
                         .orElseThrow(() -> new VerifyException("No partition data for partitioned table"));
                 builder.withPartition(PartitionData.fromJson(partitionDataJson, partitionColumnTypes));
             }
 
             appendFiles.appendFile(builder.build());
-            writtenFiles.add(task.path());
+            writtenFiles.add(task.getPath());
         }
 
         String tableDependencies = sourceTableHandles.stream()
@@ -2935,7 +2930,7 @@ public class IcebergMetadata
         transaction.commitTransaction();
         transaction = null;
         return Optional.of(new HiveWrittenPartitions(commitTasks.stream()
-                .map(CommitTaskData::path)
+                .map(CommitTaskData::getPath)
                 .collect(toImmutableList())));
     }
 

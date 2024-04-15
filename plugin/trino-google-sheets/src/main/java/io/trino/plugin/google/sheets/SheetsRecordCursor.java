@@ -73,7 +73,7 @@ public class SheetsRecordCursor
     public Type getType(int field)
     {
         checkArgument(field < columnHandles.size(), "Invalid field index");
-        return columnHandles.get(field).columnType();
+        return columnHandles.get(field).getColumnType();
     }
 
     @Override
@@ -91,7 +91,7 @@ public class SheetsRecordCursor
         String[] allFields = new String[columnHandles.size()];
 
         for (int i = 0; i < allFields.length; i++) {
-            int ordinalPos = columnHandles.get(i).ordinalPosition();
+            int ordinalPos = columnHandles.get(i).getOrdinalPosition();
             if (currentVals.size() > ordinalPos) {
                 allFields[i] = currentVals.get(ordinalPos);
             }

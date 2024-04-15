@@ -46,6 +46,8 @@ import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ColumnMetadata;
 import io.trino.spi.connector.SchemaNotFoundException;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.connector.SortItem;
+import io.trino.spi.connector.SortOrder;
 import io.trino.spi.connector.TableNotFoundException;
 import io.trino.spi.predicate.Domain;
 import io.trino.spi.predicate.Range;
@@ -281,8 +283,8 @@ public class MongoSession
 
     public void setTableComment(MongoTableHandle table, Optional<String> comment)
     {
-        String remoteSchemaName = table.remoteTableName().getDatabaseName();
-        String remoteTableName = table.remoteTableName().getCollectionName();
+        String remoteSchemaName = table.getRemoteTableName().getDatabaseName();
+        String remoteTableName = table.getRemoteTableName().getCollectionName();
 
         Document metadata = getTableMetadata(remoteSchemaName, remoteTableName);
         metadata.append(COMMENT_KEY, comment.orElse(null));
@@ -290,13 +292,13 @@ public class MongoSession
         client.getDatabase(remoteSchemaName).getCollection(schemaCollection)
                 .findOneAndReplace(new Document(TABLE_NAME_KEY, remoteTableName), metadata);
 
-        tableCache.invalidate(table.schemaTableName());
+        tableCache.invalidate(table.getSchemaTableName());
     }
 
     public void setColumnComment(MongoTableHandle table, String columnName, Optional<String> comment)
     {
-        String remoteSchemaName = table.remoteTableName().getDatabaseName();
-        String remoteTableName = table.remoteTableName().getCollectionName();
+        String remoteSchemaName = table.getRemoteTableName().getDatabaseName();
+        String remoteTableName = table.getRemoteTableName().getCollectionName();
 
         Document metadata = getTableMetadata(remoteSchemaName, remoteTableName);
 
@@ -313,13 +315,13 @@ public class MongoSession
         client.getDatabase(remoteSchemaName).getCollection(schemaCollection)
                 .findOneAndReplace(new Document(TABLE_NAME_KEY, remoteTableName), metadata);
 
-        tableCache.invalidate(table.schemaTableName());
+        tableCache.invalidate(table.getSchemaTableName());
     }
 
     public void renameTable(MongoTableHandle table, SchemaTableName newName)
     {
-        String oldSchemaName = table.remoteTableName().getDatabaseName();
-        String oldTableName = table.remoteTableName().getCollectionName();
+        String oldSchemaName = table.getRemoteTableName().getDatabaseName();
+        String oldTableName = table.getRemoteTableName().getCollectionName();
         String newSchemaName = toRemoteSchemaName(newName.getSchemaName());
 
         // Schema collection should always have the source table definition
@@ -333,16 +335,16 @@ public class MongoSession
 
         // Need to check explicitly because the old collection may not exist when it doesn't have any data
         if (collectionExists(client.getDatabase(oldSchemaName), oldTableName)) {
-            getCollection(table.remoteTableName()).renameCollection(new MongoNamespace(newSchemaName, newName.getTableName()));
+            getCollection(table.getRemoteTableName()).renameCollection(new MongoNamespace(newSchemaName, newName.getTableName()));
         }
 
-        tableCache.invalidate(table.schemaTableName());
+        tableCache.invalidate(table.getSchemaTableName());
     }
 
     public void addColumn(MongoTableHandle table, ColumnMetadata columnMetadata)
     {
-        String remoteSchemaName = table.remoteTableName().getDatabaseName();
-        String remoteTableName = table.remoteTableName().getCollectionName();
+        String remoteSchemaName = table.getRemoteTableName().getDatabaseName();
+        String remoteTableName = table.getRemoteTableName().getCollectionName();
 
         Document metadata = getTableMetadata(remoteSchemaName, remoteTableName);
 
@@ -361,13 +363,13 @@ public class MongoSession
         MongoCollection<Document> schema = db.getCollection(schemaCollection);
         schema.findOneAndReplace(new Document(TABLE_NAME_KEY, remoteTableName), metadata);
 
-        tableCache.invalidate(table.schemaTableName());
+        tableCache.invalidate(table.getSchemaTableName());
     }
 
     public void renameColumn(MongoTableHandle table, String source, String target)
     {
-        String remoteSchemaName = table.remoteTableName().getDatabaseName();
-        String remoteTableName = table.remoteTableName().getCollectionName();
+        String remoteSchemaName = table.getRemoteTableName().getDatabaseName();
+        String remoteTableName = table.getRemoteTableName().getCollectionName();
 
         Document metadata = getTableMetadata(remoteSchemaName, remoteTableName);
 
@@ -389,13 +391,13 @@ public class MongoSession
         database.getCollection(remoteTableName)
                 .updateMany(Filters.empty(), Updates.rename(source, target));
 
-        tableCache.invalidate(table.schemaTableName());
+        tableCache.invalidate(table.getSchemaTableName());
     }
 
     public void dropColumn(MongoTableHandle table, String columnName)
     {
-        String remoteSchemaName = table.remoteTableName().getDatabaseName();
-        String remoteTableName = table.remoteTableName().getCollectionName();
+        String remoteSchemaName = table.getRemoteTableName().getDatabaseName();
+        String remoteTableName = table.getRemoteTableName().getCollectionName();
 
         Document metadata = getTableMetadata(remoteSchemaName, remoteTableName);
 
@@ -412,13 +414,13 @@ public class MongoSession
         database.getCollection(remoteTableName)
                 .updateMany(Filters.empty(), Updates.unset(columnName));
 
-        tableCache.invalidate(table.schemaTableName());
+        tableCache.invalidate(table.getSchemaTableName());
     }
 
     public void setColumnType(MongoTableHandle table, String columnName, Type type)
     {
-        String remoteSchemaName = table.remoteTableName().getDatabaseName();
-        String remoteTableName = table.remoteTableName().getCollectionName();
+        String remoteSchemaName = table.getRemoteTableName().getDatabaseName();
+        String remoteTableName = table.getRemoteTableName().getCollectionName();
 
         Document metadata = getTableMetadata(remoteSchemaName, remoteTableName);
 
@@ -437,7 +439,7 @@ public class MongoSession
         client.getDatabase(remoteSchemaName).getCollection(schemaCollection)
                 .findOneAndReplace(new Document(TABLE_NAME_KEY, remoteTableName), metadata);
 
-        tableCache.invalidate(table.schemaTableName());
+        tableCache.invalidate(table.getSchemaTableName());
     }
 
     private MongoTable loadTableSchema(SchemaTableName schemaTableName)
@@ -511,22 +513,45 @@ public class MongoSession
 
     public MongoCursor<Document> execute(MongoTableHandle tableHandle, List<MongoColumnHandle> columns)
     {
-        Set<MongoColumnHandle> projectedColumns = tableHandle.projectedColumns();
+        Set<MongoColumnHandle> projectedColumns = tableHandle.getProjectedColumns();
         checkArgument(projectedColumns.isEmpty() || projectedColumns.containsAll(columns), "projectedColumns must be empty or equal to columns");
 
         Document projection = buildProjection(columns);
 
-        MongoCollection<Document> collection = getCollection(tableHandle.remoteTableName());
+        MongoCollection<Document> collection = getCollection(tableHandle.getRemoteTableName());
         Document filter = buildFilter(tableHandle);
-        FindIterable<Document> iterable = collection.find(filter).projection(projection).collation(SIMPLE_COLLATION);
-        tableHandle.limit().ifPresent(iterable::limit);
-        log.debug("Find documents: collection: %s, filter: %s, projection: %s", tableHandle.schemaTableName(), filter, projection);
+        FindIterable<Document> iterable = collection.find(filter).projection(projection);
+        // apply sort criteria to the cursor
+        if (!tableHandle.getSortItems().isEmpty()) {
+            Document sortCriteria = buildSortCriteria(tableHandle.getSortItems());
+            log.info(sortCriteria.toString());
+            iterable = iterable.sort(sortCriteria);
+        }
+        else {
+            log.info("No Sort Criteria specified!");
+        }
+        iterable = iterable.collation(SIMPLE_COLLATION);
+        tableHandle.getLimit().ifPresent(iterable::limit);
+        log.debug("Find documents: collection: %s, filter: %s, projection: %s", tableHandle.getSchemaTableName(), filter, projection);
 
         if (cursorBatchSize != 0) {
             iterable.batchSize(cursorBatchSize);
         }
 
         return iterable.iterator();
+    }
+
+    static Document buildSortCriteria(List<SortItem> sortItems)
+    {
+        Document sortCriteria = new Document();
+        for (SortItem si : sortItems) {
+            int sortOrderSignal = 1;
+            if (si.getSortOrder() == SortOrder.DESC_NULLS_LAST) {
+                sortOrderSignal = -1;
+            }
+            sortCriteria.append(si.getName(), sortOrderSignal);
+        }
+        return sortCriteria;
     }
 
     @VisibleForTesting
@@ -583,8 +608,8 @@ public class MongoSession
     {
         // Use $and operator because Document.putAll method overwrites existing entries where the key already exists
         ImmutableList.Builder<Document> filter = ImmutableList.builder();
-        table.filter().ifPresent(json -> filter.add(parseFilter(json)));
-        filter.add(buildQuery(table.constraint()));
+        table.getFilter().ifPresent(json -> filter.add(parseFilter(json)));
+        filter.add(buildQuery(table.getConstraint()));
         return andPredicate(filter.build());
     }
 

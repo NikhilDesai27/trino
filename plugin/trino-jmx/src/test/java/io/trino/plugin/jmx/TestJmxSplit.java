@@ -17,8 +17,6 @@ import com.google.common.collect.ImmutableList;
 import io.trino.spi.HostAddress;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static io.trino.plugin.jmx.MetadataUtil.SPLIT_CODEC;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,13 +24,12 @@ public class TestJmxSplit
 {
     private static final ImmutableList<HostAddress> ADDRESSES = ImmutableList.of(HostAddress.fromString("test:1234"));
     private static final JmxSplit SPLIT = new JmxSplit(ADDRESSES);
-    private static final Map<String, String> SPLIT_INFO = Map.of("addresses", "test:1234");
 
     @Test
     public void testSplit()
     {
         assertThat(SPLIT.getAddresses()).isEqualTo(ADDRESSES);
-        assertThat(SPLIT.getSplitInfo()).isEqualTo(SPLIT_INFO);
+        assertThat(SPLIT.getInfo()).isSameAs(SPLIT);
         assertThat(SPLIT.isRemotelyAccessible()).isFalse();
     }
 
@@ -43,7 +40,7 @@ public class TestJmxSplit
         JmxSplit copy = SPLIT_CODEC.fromJson(json);
 
         assertThat(copy.getAddresses()).isEqualTo(SPLIT.getAddresses());
-        assertThat(copy.getSplitInfo()).isEqualTo(SPLIT_INFO);
+        assertThat(copy.getInfo()).isSameAs(copy);
         assertThat(copy.isRemotelyAccessible()).isFalse();
     }
 }

@@ -16,12 +16,10 @@ package io.trino.plugin.tpcds;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.trino.spi.HostAddress;
 import io.trino.spi.connector.ConnectorSplit;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
@@ -29,7 +27,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static io.airlift.slice.SizeOf.estimatedSizeOf;
 import static io.airlift.slice.SizeOf.instanceSize;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 
 public class TpcdsSplit
         implements ConnectorSplit
@@ -72,13 +69,9 @@ public class TpcdsSplit
     }
 
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return ImmutableMap.of(
-                "addresses", addresses.stream().map(HostAddress::toString).collect(joining(",")),
-                "partNumber", String.valueOf(partNumber),
-                "totalParts", String.valueOf(totalParts),
-                "noSexism", String.valueOf(noSexism));
+        return this;
     }
 
     @Override

@@ -33,6 +33,7 @@ public final class TpchQueryRunner
                         .put("sql.default-schema", "tiny")
                         .buildOrThrow())
                 .build();
+        Thread.sleep(10);
         Logger log = Logger.get(TpchQueryRunner.class);
         log.info("======== SERVER STARTED ========");
         log.info("\n====\n%s\n====", queryRunner.getCoordinator().getBaseUrl());

@@ -31,15 +31,15 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Transforms:
- * <pre>{@code
+ * <pre>
  * - Sample(BERNOULLI, p)
  *     - X
- * }</pre>
+ * </pre>
  * Into:
- * <pre>{@code
+ * <pre>
  * - Filter (rand() < p)
  *     - X
- * }</pre>
+ * </pre>
  */
 public class ImplementBernoulliSampleAsFilter
         implements Rule<SampleNode>

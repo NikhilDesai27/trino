@@ -13,25 +13,35 @@
  */
 package io.trino.plugin.deltalake;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.trino.spi.connector.ConnectorMergeTableHandle;
-import io.trino.spi.connector.ConnectorTableHandle;
 
 import static java.util.Objects.requireNonNull;
 
-public record DeltaLakeMergeTableHandle(
-        DeltaLakeTableHandle tableHandle,
-        DeltaLakeInsertTableHandle insertTableHandle)
+public class DeltaLakeMergeTableHandle
         implements ConnectorMergeTableHandle
 {
-    public DeltaLakeMergeTableHandle
+    private final DeltaLakeTableHandle tableHandle;
+    private final DeltaLakeInsertTableHandle insertTableHandle;
+
+    @JsonCreator
+    public DeltaLakeMergeTableHandle(DeltaLakeTableHandle tableHandle, DeltaLakeInsertTableHandle insertTableHandle)
     {
-        requireNonNull(tableHandle, "tableHandle is null");
-        requireNonNull(insertTableHandle, "insertTableHandle is null");
+        this.tableHandle = requireNonNull(tableHandle, "tableHandle is null");
+        this.insertTableHandle = requireNonNull(insertTableHandle, "insertTableHandle is null");
     }
 
     @Override
-    public ConnectorTableHandle getTableHandle()
+    @JsonProperty
+    public DeltaLakeTableHandle getTableHandle()
     {
-        return tableHandle();
+        return tableHandle;
+    }
+
+    @JsonProperty
+    public DeltaLakeInsertTableHandle getInsertTableHandle()
+    {
+        return insertTableHandle;
     }
 }

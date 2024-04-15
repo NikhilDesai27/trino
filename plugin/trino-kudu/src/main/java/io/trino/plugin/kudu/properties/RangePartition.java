@@ -13,6 +13,30 @@
  */
 package io.trino.plugin.kudu.properties;
 
-import jakarta.annotation.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record RangePartition(@Nullable RangeBoundValue lower, @Nullable RangeBoundValue upper) {}
+public class RangePartition
+{
+    private final RangeBoundValue lower;
+    private final RangeBoundValue upper;
+
+    @JsonCreator
+    public RangePartition(
+            @JsonProperty("lower") RangeBoundValue lower,
+            @JsonProperty("upper") RangeBoundValue upper)
+    {
+        this.lower = lower;
+        this.upper = upper;
+    }
+
+    public RangeBoundValue getLower()
+    {
+        return lower;
+    }
+
+    public RangeBoundValue getUpper()
+    {
+        return upper;
+    }
+}

@@ -65,6 +65,7 @@ import static io.trino.sql.planner.plan.Patterns.aggregation;
  *             - LocalExchange (GATHER)
  *               - Aggregation (PARTIAL)
  * </pre>
+ * <p>
  */
 public class AddIntermediateAggregations
         implements Rule<AggregationNode>

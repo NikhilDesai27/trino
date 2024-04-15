@@ -53,6 +53,8 @@ import static io.trino.spi.type.IntegerType.INTEGER;
 import static io.trino.sql.ir.Comparison.Operator.EQUAL;
 import static io.trino.sql.ir.Comparison.Operator.GREATER_THAN;
 import static io.trino.sql.ir.IrUtils.and;
+import static io.trino.sql.planner.EqualityInference.isInferenceCandidate;
+import static io.trino.type.UnknownType.UNKNOWN;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestEqualityInference
@@ -388,7 +390,7 @@ public class TestEqualityInference
     private static Set<Symbol> symbols(String... symbols)
     {
         return Arrays.stream(symbols)
-                .map(name -> new Symbol(BIGINT, name))
+                .map(name -> new Symbol(UNKNOWN, name))
                 .collect(toImmutableSet());
     }
 
@@ -400,7 +402,7 @@ public class TestEqualityInference
     private static Predicate<Symbol> matchesSymbols(Collection<String> symbols)
     {
         Set<Symbol> symbolSet = symbols.stream()
-                .map(name -> new Symbol(BIGINT, name))
+                .map(name -> new Symbol(UNKNOWN, name))
                 .collect(toImmutableSet());
 
         return Predicates.in(symbolSet);
@@ -415,7 +417,7 @@ public class TestEqualityInference
     {
         return symbol -> {
             for (String prefix : prefixes) {
-                if (symbol.name().startsWith(prefix)) {
+                if (symbol.getName().startsWith(prefix)) {
                     return true;
                 }
             }

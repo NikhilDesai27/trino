@@ -236,7 +236,7 @@ public class DruidJdbcClient
         }
 
         // TODO (https://github.com/trinodb/trino/issues/9215) Implement proper type mapping and add test
-        switch (typeHandle.jdbcType()) {
+        switch (typeHandle.getJdbcType()) {
             case Types.BIT:
             case Types.BOOLEAN:
                 return Optional.of(booleanColumnMapping());
@@ -262,8 +262,8 @@ public class DruidJdbcClient
 
             case Types.NUMERIC:
             case Types.DECIMAL:
-                int decimalDigits = typeHandle.requiredDecimalDigits();
-                int precision = typeHandle.requiredColumnSize() + max(-decimalDigits, 0); // Map decimal(p, -s) (negative scale) to decimal(p+s, 0).
+                int decimalDigits = typeHandle.getRequiredDecimalDigits();
+                int precision = typeHandle.getRequiredColumnSize() + max(-decimalDigits, 0); // Map decimal(p, -s) (negative scale) to decimal(p+s, 0).
                 if (precision > Decimals.MAX_PRECISION) {
                     break;
                 }
@@ -271,10 +271,10 @@ public class DruidJdbcClient
 
             case Types.CHAR:
             case Types.NCHAR:
-                return Optional.of(defaultCharColumnMapping(typeHandle.requiredColumnSize(), false));
+                return Optional.of(defaultCharColumnMapping(typeHandle.getRequiredColumnSize(), false));
 
             case Types.VARCHAR:
-                int columnSize = typeHandle.requiredColumnSize();
+                int columnSize = typeHandle.getRequiredColumnSize();
                 if (columnSize == -1) {
                     return Optional.of(varcharColumnMapping(createUnboundedVarcharType(), true));
                 }
@@ -283,7 +283,7 @@ public class DruidJdbcClient
             case Types.NVARCHAR:
             case Types.LONGVARCHAR:
             case Types.LONGNVARCHAR:
-                return Optional.of(defaultVarcharColumnMapping(typeHandle.requiredColumnSize(), false));
+                return Optional.of(defaultVarcharColumnMapping(typeHandle.getRequiredColumnSize(), false));
 
             case Types.BINARY:
             case Types.VARBINARY:

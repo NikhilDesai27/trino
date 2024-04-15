@@ -157,7 +157,7 @@ public class TestPushProjectionIntoTableScan
                     .withSession(MOCK_SESSION)
                     .on(p -> {
                         // Register symbols
-                        types.forEach((symbol, type) -> p.symbol(symbol.name(), type));
+                        types.forEach((symbol, type) -> p.symbol(symbol.getName(), type));
 
                         return p.project(
                                 inputProjections,
@@ -174,7 +174,7 @@ public class TestPushProjectionIntoTableScan
                     .matches(project(
                             Stream.concat(newNames.entrySet().stream(), constants.entrySet().stream())
                                     .collect(toImmutableMap(
-                                            e -> e.getKey().name(),
+                                            e -> e.getKey().getName(),
                                             e -> {
                                                 if (e.getValue() instanceof String value) {
                                                     return expression(new Reference(BIGINT, value));
@@ -222,7 +222,7 @@ public class TestPushProjectionIntoTableScan
     private MockConnectorFactory createMockFactory(Map<String, ColumnHandle> assignments, Optional<MockConnectorFactory.ApplyProjection> applyProjection)
     {
         List<ColumnMetadata> metadata = assignments.entrySet().stream()
-                .map(entry -> new ColumnMetadata(entry.getKey(), ((TpchColumnHandle) entry.getValue()).type()))
+                .map(entry -> new ColumnMetadata(entry.getKey(), ((TpchColumnHandle) entry.getValue()).getType()))
                 .collect(toImmutableList());
 
         MockConnectorFactory.Builder builder = MockConnectorFactory.builder()

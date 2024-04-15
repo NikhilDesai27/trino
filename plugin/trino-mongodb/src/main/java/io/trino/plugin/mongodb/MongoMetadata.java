@@ -46,9 +46,12 @@ import io.trino.spi.connector.ProjectionApplicationResult;
 import io.trino.spi.connector.RetryMode;
 import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.connector.SchemaTablePrefix;
+import io.trino.spi.connector.SortItem;
+import io.trino.spi.connector.SortOrder;
 import io.trino.spi.connector.SortingProperty;
 import io.trino.spi.connector.TableFunctionApplicationResult;
 import io.trino.spi.connector.TableNotFoundException;
+import io.trino.spi.connector.TopNApplicationResult;
 import io.trino.spi.expression.ConnectorExpression;
 import io.trino.spi.expression.FieldDereference;
 import io.trino.spi.expression.Variable;
@@ -68,6 +71,8 @@ import io.trino.spi.type.VarcharType;
 import org.bson.Document;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -191,7 +196,7 @@ public class MongoMetadata
     public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle)
     {
         MongoTableHandle table = (MongoTableHandle) tableHandle;
-        List<MongoColumnHandle> columns = mongoSession.getTable(table.schemaTableName()).getColumns();
+        List<MongoColumnHandle> columns = mongoSession.getTable(table.getSchemaTableName()).getColumns();
 
         ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
         for (MongoColumnHandle columnHandle : columns) {
@@ -242,7 +247,7 @@ public class MongoMetadata
     {
         MongoTableHandle table = (MongoTableHandle) tableHandle;
 
-        mongoSession.dropTable(table.remoteTableName());
+        mongoSession.dropTable(table.getRemoteTableName());
     }
 
     @Override
@@ -412,8 +417,8 @@ public class MongoMetadata
     public Optional<ConnectorOutputMetadata> finishCreateTable(ConnectorSession session, ConnectorOutputTableHandle tableHandle, Collection<Slice> fragments, Collection<ComputedStatistics> computedStatistics)
     {
         MongoOutputTableHandle handle = (MongoOutputTableHandle) tableHandle;
-        if (handle.temporaryTableName().isPresent()) {
-            finishInsert(session, handle.remoteTableName(), handle.getTemporaryRemoteTableName().get(), handle.pageSinkIdColumnName().get(), fragments);
+        if (handle.getTemporaryTableName().isPresent()) {
+            finishInsert(session, handle.getRemoteTableName(), handle.getTemporaryRemoteTableName().get(), handle.getPageSinkIdColumnName().get(), fragments);
         }
         clearRollback();
         return Optional.empty();
@@ -422,7 +427,7 @@ public class MongoMetadata
     @Override
     public ConnectorInsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle, List<ColumnHandle> insertedColumns, RetryMode retryMode)
     {
-        MongoTable table = mongoSession.getTable(((MongoTableHandle) tableHandle).schemaTableName());
+        MongoTable table = mongoSession.getTable(((MongoTableHandle) tableHandle).getSchemaTableName());
         MongoTableHandle handle = table.getTableHandle();
         List<MongoColumnHandle> columns = table.getColumns();
         List<MongoColumnHandle> handleColumns = columns.stream()
@@ -432,7 +437,7 @@ public class MongoMetadata
 
         if (retryMode == RetryMode.NO_RETRIES) {
             return new MongoInsertTableHandle(
-                    handle.remoteTableName(),
+                    handle.getRemoteTableName(),
                     handleColumns,
                     Optional.empty(),
                     Optional.empty());
@@ -443,13 +448,13 @@ public class MongoMetadata
                 .add(pageSinkIdColumn)
                 .build();
 
-        RemoteTableName temporaryTable = new RemoteTableName(handle.schemaTableName().getSchemaName(), generateTemporaryTableName(session));
+        RemoteTableName temporaryTable = new RemoteTableName(handle.getSchemaTableName().getSchemaName(), generateTemporaryTableName(session));
         mongoSession.createTable(temporaryTable, allColumns, Optional.empty());
 
         setRollback(() -> mongoSession.dropTable(temporaryTable));
 
         return new MongoInsertTableHandle(
-                handle.remoteTableName(),
+                handle.getRemoteTableName(),
                 handleColumns,
                 Optional.of(temporaryTable.getCollectionName()),
                 Optional.of(pageSinkIdColumn.getBaseName()));
@@ -464,8 +469,8 @@ public class MongoMetadata
             Collection<ComputedStatistics> computedStatistics)
     {
         MongoInsertTableHandle handle = (MongoInsertTableHandle) insertHandle;
-        if (handle.temporaryTableName().isPresent()) {
-            finishInsert(session, handle.remoteTableName(), handle.getTemporaryRemoteTableName().get(), handle.pageSinkIdColumnName().get(), fragments);
+        if (handle.getTemporaryTableName().isPresent()) {
+            finishInsert(session, handle.getRemoteTableName(), handle.getTemporaryRemoteTableName().get(), handle.getPageSinkIdColumnName().get(), fragments);
         }
         clearRollback();
         return Optional.empty();
@@ -529,7 +534,7 @@ public class MongoMetadata
     public OptionalLong executeDelete(ConnectorSession session, ConnectorTableHandle handle)
     {
         MongoTableHandle table = (MongoTableHandle) handle;
-        return OptionalLong.of(mongoSession.deleteDocuments(table.remoteTableName(), table.constraint()));
+        return OptionalLong.of(mongoSession.deleteDocuments(table.getRemoteTableName(), table.getConstraint()));
     }
 
     @Override
@@ -539,7 +544,7 @@ public class MongoMetadata
 
         ImmutableList.Builder<LocalProperty<ColumnHandle>> localProperties = ImmutableList.builder();
 
-        MongoTable tableInfo = mongoSession.getTable(tableHandle.schemaTableName());
+        MongoTable tableInfo = mongoSession.getTable(tableHandle.getSchemaTableName());
         Map<String, ColumnHandle> columns = getColumnHandles(session, tableHandle);
 
         for (MongoIndex index : tableInfo.getIndexes()) {
@@ -575,20 +580,108 @@ public class MongoMetadata
             return Optional.empty();
         }
 
-        if (handle.limit().isPresent() && handle.limit().getAsInt() <= limit) {
+        if (handle.getLimit().isPresent() && handle.getLimit().getAsInt() <= limit) {
             return Optional.empty();
         }
 
         return Optional.of(new LimitApplicationResult<>(
                 new MongoTableHandle(
-                        handle.schemaTableName(),
-                        handle.remoteTableName(),
-                        handle.filter(),
-                        handle.constraint(),
-                        handle.projectedColumns(),
-                        OptionalInt.of(toIntExact(limit))),
+                        handle.getSchemaTableName(),
+                        handle.getRemoteTableName(),
+                        handle.getFilter(),
+                        handle.getConstraint(),
+                        handle.getProjectedColumns(),
+                        OptionalInt.of(toIntExact(limit)),
+                        handle.getSortItems()),
                 true,
                 false));
+    }
+
+    @Override
+    public Optional<TopNApplicationResult<ConnectorTableHandle>> applyTopN(ConnectorSession session, ConnectorTableHandle table, long topNCount, List<SortItem> sortItems, Map<String, ColumnHandle> assignments)
+    {
+        MongoTableHandle handle = (MongoTableHandle) table;
+
+        // topNCount is analogous to limit
+
+        if (topNCount == 0) {
+            return Optional.empty();
+        }
+
+        if (topNCount > Integer.MAX_VALUE) {
+            return Optional.empty();
+        }
+
+        if (handle.getLimit().isPresent() && handle.getLimit().getAsInt() <= topNCount) {
+            return Optional.empty();
+        }
+
+        if (sortItems.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // MongoDB supports a maximum of 32 fields in it's cursor.sort() method (backed by $sort operator)
+        // see, https://www.mongodb.com/docs/manual/reference/method/cursor.sort/#limits
+        if (sortItems.size() > 32) {
+            return Optional.empty();
+        }
+
+        log.info("MongoDB: applyTopN with the following sortItems");
+
+        // MongoDB allows a column/field to take a value of any type across documents.
+        // Hence, it's sort order factors in this type information as well.
+        // null is valued less than any other type and so on
+        // see, https://www.mongodb.com/docs/manual/reference/method/cursor.sort/#ascending-descending-sort
+        // For now, we only support ASC_NULLS_FIRST and DESC_NULLS_LAST, as these are implemented in MongoDB by default
+        for (SortItem si : sortItems) {
+            log.info(si.toString());
+            if (si.getSortOrder() == SortOrder.ASC_NULLS_LAST) {
+                return Optional.empty();
+            }
+            else if (si.getSortOrder() == SortOrder.DESC_NULLS_FIRST) {
+                return Optional.empty();
+            }
+        }
+
+        List<SortItem> sortItemsWithMongoColumnName = new ArrayList<>();
+
+        for (SortItem si : sortItems) {
+            SortItem sortItemWithMongoColumnName = new SortItem(mongoColumnName(si.getName()), si.getSortOrder());
+            sortItemsWithMongoColumnName.add(sortItemWithMongoColumnName);
+            log.info(sortItemWithMongoColumnName.toString());
+        }
+
+        MongoTableHandle tableHandle = new MongoTableHandle(
+                handle.getSchemaTableName(),
+                handle.getRemoteTableName(),
+                handle.getFilter(),
+                handle.getConstraint(),
+                handle.getProjectedColumns(),
+                OptionalInt.of(toIntExact(topNCount)),
+                sortItemsWithMongoColumnName);
+
+        return Optional.of(new TopNApplicationResult<>(
+                tableHandle,
+                true,
+                false));
+    }
+
+    private static String mongoColumnName(String trinoColumnName)
+    {
+        String[] trinoColumnSegments = trinoColumnName.split("_");
+        trinoColumnSegments = Arrays.stream(trinoColumnSegments).filter(s -> !isNumeric(s)).toArray(String[]::new);
+        return String.join(".", trinoColumnSegments);
+    }
+
+    private static boolean isNumeric(String s)
+    {
+        try {
+            Integer.parseInt(s);
+            return true;
+        }
+        catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     @Override
@@ -596,7 +689,7 @@ public class MongoMetadata
     {
         MongoTableHandle handle = (MongoTableHandle) table;
 
-        TupleDomain<ColumnHandle> oldDomain = handle.constraint();
+        TupleDomain<ColumnHandle> oldDomain = handle.getConstraint();
         TupleDomain<ColumnHandle> newDomain = oldDomain.intersect(constraint.getSummary());
         TupleDomain<ColumnHandle> remainingFilter;
         if (newDomain.isNone()) {
@@ -629,12 +722,13 @@ public class MongoMetadata
         }
 
         handle = new MongoTableHandle(
-                handle.schemaTableName(),
-                handle.remoteTableName(),
-                handle.filter(),
+                handle.getSchemaTableName(),
+                handle.getRemoteTableName(),
+                handle.getFilter(),
                 newDomain,
-                handle.projectedColumns(),
-                handle.limit());
+                handle.getProjectedColumns(),
+                handle.getLimit(),
+                handle.getSortItems());
 
         return Optional.of(new ConstraintApplicationResult<>(handle, remainingFilter, constraint.getExpression(), false));
     }
@@ -665,7 +759,7 @@ public class MongoMetadata
             Set<MongoColumnHandle> projectedColumns = assignments.values().stream()
                     .map(MongoColumnHandle.class::cast)
                     .collect(toImmutableSet());
-            if (mongoTableHandle.projectedColumns().equals(projectedColumns)) {
+            if (mongoTableHandle.getProjectedColumns().equals(projectedColumns)) {
                 return Optional.empty();
             }
             List<Assignment> assignmentsList = assignments.entrySet().stream()
@@ -820,7 +914,7 @@ public class MongoMetadata
 
     private static SchemaTableName getTableName(ConnectorTableHandle tableHandle)
     {
-        return ((MongoTableHandle) tableHandle).schemaTableName();
+        return ((MongoTableHandle) tableHandle).getSchemaTableName();
     }
 
     private ConnectorTableMetadata getTableMetadata(SchemaTableName tableName)

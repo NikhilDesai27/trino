@@ -930,7 +930,7 @@ public class EventDrivenFaultTolerantQueryScheduler
                 }
                 else if (failureInfo.getErrorCode() == USER_CANCELED.toErrorCode()
                         && noEventsStopwatch.elapsed().toMillis() > SCHEDULER_STALLED_DURATION_ON_USER_CANCELED_THRESHOLD_MILLIS) {
-                    logDebugInfoSafe(format("Scheduler stalled for %s on USER_CANCELED", noEventsStopwatch.elapsed()));
+                    logDebugInfoSafe(format("Scheduler stalled for %s on USER_CANCLED", noEventsStopwatch.elapsed()));
                 }
             });
 
@@ -2246,13 +2246,8 @@ public class EventDrivenFaultTolerantQueryScheduler
             if (getState().isDone() || taskDescriptorLoadingActive) {
                 return Optional.empty();
             }
-            Optional<ListenableFuture<AssignmentResult>> loadingFuture = taskSource.process();
-            if (loadingFuture.isEmpty()) {
-                // taskSource finished
-                return Optional.empty();
-            }
             taskDescriptorLoadingActive = true;
-            return loadingFuture;
+            return Optional.of(taskSource.process());
         }
 
         public void taskDescriptorLoadingComplete()

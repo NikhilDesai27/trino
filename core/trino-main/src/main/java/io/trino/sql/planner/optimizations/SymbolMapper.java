@@ -162,7 +162,7 @@ public class SymbolMapper
             public Expression rewriteLambda(Lambda node, Void context, ExpressionTreeRewriter<Void> treeRewriter)
             {
                 List<Symbol> arguments = node.arguments().stream()
-                        .map(symbol -> map(new Symbol(symbol.type(), symbol.name())))
+                        .map(symbol -> map(new Symbol(symbol.getType(), symbol.getName())))
                         .collect(toImmutableList());
 
                 Expression body = treeRewriter.rewrite(node.body(), context);
@@ -280,12 +280,12 @@ public class SymbolMapper
 
     private SpecificationWithPreSortedPrefix mapAndDistinct(DataOrganizationSpecification specification, int preSorted)
     {
-        Optional<OrderingSchemeWithPreSortedPrefix> newOrderingScheme = specification.orderingScheme()
+        Optional<OrderingSchemeWithPreSortedPrefix> newOrderingScheme = specification.getOrderingScheme()
                 .map(orderingScheme -> map(orderingScheme, preSorted));
 
         return new SpecificationWithPreSortedPrefix(
                 new DataOrganizationSpecification(
-                        mapAndDistinct(specification.partitionBy()),
+                        mapAndDistinct(specification.getPartitionBy()),
                         newOrderingScheme.map(OrderingSchemeWithPreSortedPrefix::orderingScheme)),
                 newOrderingScheme.map(OrderingSchemeWithPreSortedPrefix::preSorted).orElse(preSorted));
     }
@@ -293,8 +293,8 @@ public class SymbolMapper
     public DataOrganizationSpecification mapAndDistinct(DataOrganizationSpecification specification)
     {
         return new DataOrganizationSpecification(
-                mapAndDistinct(specification.partitionBy()),
-                specification.orderingScheme().map(this::map));
+                mapAndDistinct(specification.getPartitionBy()),
+                specification.getOrderingScheme().map(this::map));
     }
 
     public PatternRecognitionNode map(PatternRecognitionNode node, PlanNode source)
@@ -459,14 +459,14 @@ public class SymbolMapper
         ImmutableMap.Builder<Symbol, SortOrder> newOrderings = ImmutableMap.builder();
         int newPreSorted = preSorted;
 
-        Set<Symbol> added = new HashSet<>(orderingScheme.orderBy().size());
+        Set<Symbol> added = new HashSet<>(orderingScheme.getOrderBy().size());
 
-        for (int i = 0; i < orderingScheme.orderBy().size(); i++) {
-            Symbol symbol = orderingScheme.orderBy().get(i);
+        for (int i = 0; i < orderingScheme.getOrderBy().size(); i++) {
+            Symbol symbol = orderingScheme.getOrderBy().get(i);
             Symbol canonical = map(symbol);
             if (added.add(canonical)) {
                 newSymbols.add(canonical);
-                newOrderings.put(canonical, orderingScheme.ordering(symbol));
+                newOrderings.put(canonical, orderingScheme.getOrdering(symbol));
             }
             else if (i < preSorted) {
                 newPreSorted--;
@@ -480,12 +480,12 @@ public class SymbolMapper
     {
         ImmutableList.Builder<Symbol> newSymbols = ImmutableList.builder();
         ImmutableMap.Builder<Symbol, SortOrder> newOrderings = ImmutableMap.builder();
-        Set<Symbol> added = new HashSet<>(orderingScheme.orderBy().size());
-        for (Symbol symbol : orderingScheme.orderBy()) {
+        Set<Symbol> added = new HashSet<>(orderingScheme.getOrderBy().size());
+        for (Symbol symbol : orderingScheme.getOrderBy()) {
             Symbol canonical = map(symbol);
             if (added.add(canonical)) {
                 newSymbols.add(canonical);
-                newOrderings.put(canonical, orderingScheme.ordering(symbol));
+                newOrderings.put(canonical, orderingScheme.getOrdering(symbol));
             }
         }
         return new OrderingScheme(newSymbols.build(), newOrderings.buildOrThrow());

@@ -1001,7 +1001,6 @@ public class TestDeltaLakeBasic
         assertQueryFails("COMMENT ON COLUMN " + tableName + ".foo IS NULL", "Metadata not found in transaction log for tpch." + tableName);
         assertQueryFails("CALL system.vacuum(CURRENT_SCHEMA, '" + tableName + "', '7d')", "Metadata not found in transaction log for tpch." + tableName);
         assertQueryFails("SELECT * FROM TABLE(system.table_changes('tpch', '" + tableName + "'))", "Metadata not found in transaction log for tpch." + tableName);
-        assertQueryFails("CREATE OR REPLACE TABLE " + tableName + " (id INTEGER)", "Metadata not found in transaction log for tpch." + tableName);
         assertQuerySucceeds("CALL system.drop_extended_stats(CURRENT_SCHEMA, '" + tableName + "')");
 
         // Avoid failing metadata queries
@@ -1061,61 +1060,6 @@ public class TestDeltaLakeBasic
         assertUpdate("CALL system.register_table('%s', '%s', '%s')".formatted(getSession().getSchema().orElseThrow(), tableName, tableLocation.toUri()));
         assertThat(query("DESCRIBE " + tableName)).result().projected("Column", "Type").skippingTypesCheck().matches("VALUES ('c', 'integer')");
         assertThat(query("SELECT * FROM " + tableName)).matches("VALUES 1, 2, 3, 4, 5, 6, 7");
-    }
-
-    @Test
-    public void testTimeTravelWithMultipartCheckpoint()
-            throws Exception
-    {
-        String tableName = "test_time_travel_multipart_checkpoint_" + randomNameSuffix();
-        Path tableLocation = Files.createTempFile(tableName, null);
-        copyDirectoryContents(new File(Resources.getResource("deltalake/multipart_checkpoint").toURI()).toPath(), tableLocation);
-        assertUpdate("CALL system.register_table(CURRENT_SCHEMA, '%s', '%s')".formatted(tableName, tableLocation.toUri()));
-
-        // Version 6 has multipart checkpoint
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 5")).matches("VALUES 1, 2, 3, 4, 5");
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 6")).matches("VALUES 1, 2, 3, 4, 5, 6");
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 7")).matches("VALUES 1, 2, 3, 4, 5, 6, 7");
-
-        // Redo the time travel without _last_checkpoint file
-        Files.delete(tableLocation.resolve("_delta_log/_last_checkpoint"));
-        assertUpdate("CALL system.flush_metadata_cache(schema_name => CURRENT_SCHEMA, table_name => '" + tableName + "')");
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 5")).matches("VALUES 1, 2, 3, 4, 5");
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 6")).matches("VALUES 1, 2, 3, 4, 5, 6");
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 7")).matches("VALUES 1, 2, 3, 4, 5, 6, 7");
-
-        assertUpdate("DROP TABLE " + tableName);
-    }
-
-    @Test
-    public void testTimeTravelWithV2Checkpoint()
-            throws Exception
-    {
-        testTimeTravelWithV2Checkpoint("deltalake/v2_checkpoint_json");
-        testTimeTravelWithV2Checkpoint("deltalake/v2_checkpoint_parquet");
-        testTimeTravelWithV2Checkpoint("databricks133/v2_checkpoint_json");
-        testTimeTravelWithV2Checkpoint("databricks133/v2_checkpoint_parquet");
-    }
-
-    private void testTimeTravelWithV2Checkpoint(String resourceName)
-            throws Exception
-    {
-        String tableName = "test_time_travel_v2_checkpoint_" + randomNameSuffix();
-        Path tableLocation = Files.createTempFile(tableName, null);
-        copyDirectoryContents(new File(Resources.getResource(resourceName).toURI()).toPath(), tableLocation);
-        assertUpdate("CALL system.register_table(CURRENT_SCHEMA, '%s', '%s')".formatted(tableName, tableLocation.toUri()));
-
-        // Version 1 has v2 checkpoint
-        assertQueryReturnsEmptyResult("SELECT * FROM " + tableName + " FOR VERSION AS OF 0");
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 1")).matches("VALUES (1, 2)");
-
-        // Redo the time travel without _last_checkpoint file
-        Files.delete(tableLocation.resolve("_delta_log/_last_checkpoint"));
-        assertUpdate("CALL system.flush_metadata_cache(schema_name => CURRENT_SCHEMA, table_name => '" + tableName + "')");
-        assertQueryReturnsEmptyResult("SELECT * FROM " + tableName + " FOR VERSION AS OF 0");
-        assertThat(query("SELECT * FROM " + tableName + " FOR VERSION AS OF 1")).matches("VALUES (1, 2)");
-
-        assertUpdate("DROP TABLE " + tableName);
     }
 
     /**

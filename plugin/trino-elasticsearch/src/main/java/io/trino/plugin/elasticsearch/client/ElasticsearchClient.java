@@ -173,7 +173,7 @@ public class ElasticsearchClient
             Set<ElasticsearchNode> nodes = fetchNodes();
 
             HttpHost[] hosts = nodes.stream()
-                    .map(ElasticsearchNode::address)
+                    .map(ElasticsearchNode::getAddress)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .map(address -> HttpHost.create(format("%s://%s", tlsEnabled ? "https" : "http", address)))
@@ -314,7 +314,7 @@ public class ElasticsearchClient
     public List<Shard> getSearchShards(String index)
     {
         Map<String, ElasticsearchNode> nodeById = getNodes().stream()
-                .collect(toImmutableMap(ElasticsearchNode::id, Function.identity()));
+                .collect(toImmutableMap(ElasticsearchNode::getId, Function.identity()));
 
         SearchShardsResponse shardsResponse = doRequest(format("/%s/_search_shards", index), SEARCH_SHARDS_RESPONSE_CODEC::fromJson);
 
@@ -340,7 +340,7 @@ public class ElasticsearchClient
                 node = nodeById.get(chosen.getNode());
             }
 
-            shards.add(new Shard(chosen.getIndex(), chosen.getShard(), node.address()));
+            shards.add(new Shard(chosen.getIndex(), chosen.getShard(), node.getAddress()));
         }
 
         return shards.build();

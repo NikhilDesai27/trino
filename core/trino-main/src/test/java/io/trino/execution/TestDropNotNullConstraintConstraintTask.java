@@ -14,7 +14,6 @@
 package io.trino.execution;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.trino.Session;
@@ -122,7 +121,7 @@ public class TestDropNotNullConstraintConstraintTask
     public void testDropNotNullConstraintOnView()
     {
         QualifiedObjectName viewName = qualifiedObjectName("existing_view");
-        metadata.createView(testSession, viewName, someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, viewName, someView(), false);
 
         assertTrinoExceptionThrownBy(() -> getFutureValue(executeDropNotNullConstraint(asQualifiedName(viewName), identifier("test"), false)))
                 .hasErrorCode(TABLE_NOT_FOUND)

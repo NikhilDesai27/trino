@@ -384,8 +384,8 @@ public class KuduClientSession
             if (definition == null) {
                 throw new TrinoException(QUERY_REJECTED, "Table " + schemaTableName + " has no range partition");
             }
-            PartialRow lowerBound = KuduTableProperties.toRangeBoundToPartialRow(schema, definition, rangePartition.lower());
-            PartialRow upperBound = KuduTableProperties.toRangeBoundToPartialRow(schema, definition, rangePartition.upper());
+            PartialRow lowerBound = KuduTableProperties.toRangeBoundToPartialRow(schema, definition, rangePartition.getLower());
+            PartialRow upperBound = KuduTableProperties.toRangeBoundToPartialRow(schema, definition, rangePartition.getUpper());
             AlterTableOptions alterOptions = new AlterTableOptions();
             switch (change) {
                 case ADD:
@@ -467,19 +467,19 @@ public class KuduClientSession
         PartitionDesign partitionDesign = KuduTableProperties.getPartitionDesign(properties);
         if (partitionDesign.getHash() != null) {
             for (HashPartitionDefinition partition : partitionDesign.getHash()) {
-                options.addHashPartitions(partition.columns(), partition.buckets());
+                options.addHashPartitions(partition.getColumns(), partition.getBuckets());
             }
         }
         if (partitionDesign.getRange() != null) {
             rangePartitionDefinition = partitionDesign.getRange();
-            options.setRangePartitionColumns(rangePartitionDefinition.columns());
+            options.setRangePartitionColumns(rangePartitionDefinition.getColumns());
         }
 
         List<RangePartition> rangePartitions = KuduTableProperties.getRangePartitions(properties);
         if (rangePartitionDefinition != null && !rangePartitions.isEmpty()) {
             for (RangePartition rangePartition : rangePartitions) {
-                PartialRow lower = KuduTableProperties.toRangeBoundToPartialRow(schema, rangePartitionDefinition, rangePartition.lower());
-                PartialRow upper = KuduTableProperties.toRangeBoundToPartialRow(schema, rangePartitionDefinition, rangePartition.upper());
+                PartialRow lower = KuduTableProperties.toRangeBoundToPartialRow(schema, rangePartitionDefinition, rangePartition.getLower());
+                PartialRow upper = KuduTableProperties.toRangeBoundToPartialRow(schema, rangePartitionDefinition, rangePartition.getUpper());
                 options.addRangePartition(lower, upper);
             }
         }

@@ -42,7 +42,7 @@ public class TestPruneSemiJoinColumns
     public void testSemiJoinNotNeeded()
     {
         tester().assertThat(new PruneSemiJoinColumns())
-                .on(p -> buildProjectedSemiJoin(p, symbol -> symbol.name().equals("leftValue")))
+                .on(p -> buildProjectedSemiJoin(p, symbol -> symbol.getName().equals("leftValue")))
                 .matches(
                         strictProject(
                                 ImmutableMap.of("leftValue", expression(new Reference(BIGINT, "leftValue"))),
@@ -61,7 +61,7 @@ public class TestPruneSemiJoinColumns
     public void testKeysNotNeeded()
     {
         tester().assertThat(new PruneSemiJoinColumns())
-                .on(p -> buildProjectedSemiJoin(p, symbol -> (symbol.name().equals("leftValue") || symbol.name().equals("match"))))
+                .on(p -> buildProjectedSemiJoin(p, symbol -> (symbol.getName().equals("leftValue") || symbol.getName().equals("match"))))
                 .doesNotFire();
     }
 
@@ -69,7 +69,7 @@ public class TestPruneSemiJoinColumns
     public void testValueNotNeeded()
     {
         tester().assertThat(new PruneSemiJoinColumns())
-                .on(p -> buildProjectedSemiJoin(p, symbol -> symbol.name().equals("match")))
+                .on(p -> buildProjectedSemiJoin(p, symbol -> symbol.getName().equals("match")))
                 .matches(
                         strictProject(
                                 ImmutableMap.of("match", expression(new Reference(BOOLEAN, "match"))),

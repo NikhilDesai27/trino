@@ -73,13 +73,13 @@ public class LoginBasedUnconstrainedContextProvider
     }
 
     @Override
-    public synchronized Subject getSubject()
+    public Subject getSubject()
     {
         return loginContext.getSubject();
     }
 
     @Override
-    public synchronized void refresh()
+    public void refresh()
             throws GSSException
     {
         // TODO: do we need to call logout() on the LoginContext?

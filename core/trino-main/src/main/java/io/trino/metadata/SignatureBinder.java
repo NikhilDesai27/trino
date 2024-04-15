@@ -71,13 +71,12 @@ import static java.util.stream.Collectors.toList;
  * bind to an orderable type)
  * <p>
  * This implementation has made assumptions. When any of the assumptions is not satisfied, it will fail loudly.
- * <ul>
+ * <p><ul>
  * <li>A type cannot have both type parameter and literal parameter.
  * <li>A literal parameter cannot be used across types. see {@link #checkNoLiteralVariableUsageAcrossTypes(TypeSignature, Map)}.
- * </ul>
- * <p>
+ * </ul><p>
  * Here are some known implementation limitations:
- * <ul>
+ * <p><ul>
  * <li>Binding signature {@code (decimal(x,2))boolean} with arguments {@code decimal(1,0)} fails.
  * It should produce {@code decimal(3,1)}.
  * </ul>

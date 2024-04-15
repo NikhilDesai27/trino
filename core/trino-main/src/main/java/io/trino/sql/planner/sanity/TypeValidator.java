@@ -97,10 +97,10 @@ public final class TypeValidator
             visitPlan(node, context);
 
             for (Map.Entry<Symbol, Expression> entry : node.getAssignments().entrySet()) {
-                Type expectedType = entry.getKey().type();
+                Type expectedType = entry.getKey().getType();
                 if (entry.getValue() instanceof Reference reference) {
                     Symbol symbol = Symbol.from(reference);
-                    verifyTypeSignature(entry.getKey(), expectedType, symbol.type());
+                    verifyTypeSignature(entry.getKey(), expectedType, symbol.getType());
                     continue;
                 }
                 Type actualType = entry.getValue().type();
@@ -118,9 +118,9 @@ public final class TypeValidator
             ListMultimap<Symbol, Symbol> symbolMapping = node.getSymbolMapping();
             for (Symbol keySymbol : symbolMapping.keySet()) {
                 List<Symbol> valueSymbols = symbolMapping.get(keySymbol);
-                Type expectedType = keySymbol.type();
+                Type expectedType = keySymbol.getType();
                 for (Symbol valueSymbol : valueSymbols) {
-                    verifyTypeSignature(keySymbol, expectedType, valueSymbol.type());
+                    verifyTypeSignature(keySymbol, expectedType, valueSymbol.getType());
                 }
             }
 
@@ -137,14 +137,14 @@ public final class TypeValidator
 
         private void checkSignature(Symbol symbol, BoundSignature signature)
         {
-            Type expectedType = symbol.type();
+            Type expectedType = symbol.getType();
             Type actualType = signature.getReturnType();
             verifyTypeSignature(symbol, expectedType, actualType);
         }
 
         private void checkCall(Symbol symbol, BoundSignature signature, List<Expression> arguments)
         {
-            Type expectedType = symbol.type();
+            Type expectedType = symbol.getType();
             Type actualType = signature.getReturnType();
             verifyTypeSignature(symbol, expectedType, actualType);
 
@@ -175,10 +175,10 @@ public final class TypeValidator
                         .map(RowType.Field::getType)
                         .toList();
 
-                checkArgument(expectedFieldType.equals(actualFieldTypes), "type of symbol '%s' is expected to be %s, but the actual type is %s", symbol.name(), expected, actual);
+                checkArgument(expectedFieldType.equals(actualFieldTypes), "type of symbol '%s' is expected to be %s, but the actual type is %s", symbol.getName(), expected, actual);
             }
             else if (!(actual instanceof UnknownType)) { // UNKNOWN should be considered as a wildcard type, which matches all the other types
-                checkArgument(expected.equals(actual), "type of symbol '%s' is expected to be %s, but the actual type is %s", symbol.name(), expected, actual);
+                checkArgument(expected.equals(actual), "type of symbol '%s' is expected to be %s, but the actual type is %s", symbol.getName(), expected, actual);
             }
         }
     }

@@ -392,6 +392,7 @@ public final class HiveQueryRunner
                 //.setTpchColumnNaming(ColumnNaming.STANDARD)
                 //.setTpchDecimalTypeMapping(DecimalTypeMapping.DECIMAL)
                 .build();
+        Thread.sleep(10);
         log.info("======== SERVER STARTED ========");
         log.info("\n====\n%s\n====", queryRunner.getCoordinator().getBaseUrl());
     }

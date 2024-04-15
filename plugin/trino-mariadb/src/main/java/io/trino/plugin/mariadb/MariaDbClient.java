@@ -347,7 +347,7 @@ public class MariaDbClient
             return unsignedMapping;
         }
 
-        switch (typeHandle.jdbcType()) {
+        switch (typeHandle.getJdbcType()) {
             case Types.TINYINT:
                 return Optional.of(tinyintColumnMapping());
             case Types.SMALLINT:
@@ -368,8 +368,8 @@ public class MariaDbClient
                 return Optional.of(doubleColumnMapping());
             case Types.NUMERIC:
             case Types.DECIMAL:
-                int decimalDigits = typeHandle.requiredDecimalDigits();
-                int precision = typeHandle.requiredColumnSize();
+                int decimalDigits = typeHandle.getRequiredDecimalDigits();
+                int precision = typeHandle.getRequiredColumnSize();
                 if (getDecimalRounding(session) == ALLOW_OVERFLOW && precision > Decimals.MAX_PRECISION) {
                     int scale = min(decimalDigits, getDecimalDefaultScale(session));
                     return Optional.of(decimalColumnMapping(createDecimalType(Decimals.MAX_PRECISION, scale), getDecimalRoundingMode(session)));
@@ -380,10 +380,10 @@ public class MariaDbClient
                 }
                 return Optional.of(decimalColumnMapping(createDecimalType(precision, max(decimalDigits, 0))));
             case Types.CHAR:
-                return Optional.of(defaultCharColumnMapping(typeHandle.requiredColumnSize(), false));
+                return Optional.of(defaultCharColumnMapping(typeHandle.getRequiredColumnSize(), false));
             case Types.VARCHAR:
             case Types.LONGVARCHAR:
-                return Optional.of(defaultVarcharColumnMapping(typeHandle.requiredColumnSize(), false));
+                return Optional.of(defaultVarcharColumnMapping(typeHandle.getRequiredColumnSize(), false));
             case Types.BINARY:
             case Types.VARBINARY:
             case Types.LONGVARBINARY:
@@ -394,11 +394,11 @@ public class MariaDbClient
                         dateReadFunctionUsingLocalDate(),
                         dateWriteFunction()));
             case Types.TIME:
-                TimeType timeType = createTimeType(getTimePrecision(typeHandle.requiredColumnSize()));
+                TimeType timeType = createTimeType(getTimePrecision(typeHandle.getRequiredColumnSize()));
                 return Optional.of(timeColumnMapping(timeType));
             case Types.TIMESTAMP:
                 // This jdbcType maps both MariaDB TIMESTAMP and DATETIME types to Trino TIMESTAMP type
-                TimestampType timestampType = createTimestampType(getTimestampPrecision(typeHandle.requiredColumnSize()));
+                TimestampType timestampType = createTimestampType(getTimestampPrecision(typeHandle.getRequiredColumnSize()));
                 return Optional.of(timestampColumnMapping(timestampType));
         }
 
@@ -595,7 +595,7 @@ public class MariaDbClient
     public boolean supportsTopN(ConnectorSession session, JdbcTableHandle handle, List<JdbcSortItem> sortOrder)
     {
         for (JdbcSortItem sortItem : sortOrder) {
-            Type sortItemType = sortItem.column().getColumnType();
+            Type sortItemType = sortItem.getColumn().getColumnType();
             if (sortItemType instanceof CharType || sortItemType instanceof VarcharType) {
                 // Remote database can be case insensitive.
                 return false;
@@ -610,10 +610,10 @@ public class MariaDbClient
         return Optional.of((query, sortItems, limit) -> {
             String orderBy = sortItems.stream()
                     .flatMap(sortItem -> {
-                        String ordering = sortItem.sortOrder().isAscending() ? "ASC" : "DESC";
-                        String columnSorting = format("%s %s", quoted(sortItem.column().getColumnName()), ordering);
+                        String ordering = sortItem.getSortOrder().isAscending() ? "ASC" : "DESC";
+                        String columnSorting = format("%s %s", quoted(sortItem.getColumn().getColumnName()), ordering);
 
-                        switch (sortItem.sortOrder()) {
+                        switch (sortItem.getSortOrder()) {
                             case ASC_NULLS_FIRST:
                                 // In MariaDB ASC implies NULLS FIRST
                             case DESC_NULLS_LAST:
@@ -622,14 +622,14 @@ public class MariaDbClient
 
                             case ASC_NULLS_LAST:
                                 return Stream.of(
-                                        format("ISNULL(%s) ASC", quoted(sortItem.column().getColumnName())),
+                                        format("ISNULL(%s) ASC", quoted(sortItem.getColumn().getColumnName())),
                                         columnSorting);
                             case DESC_NULLS_FIRST:
                                 return Stream.of(
-                                        format("ISNULL(%s) DESC", quoted(sortItem.column().getColumnName())),
+                                        format("ISNULL(%s) DESC", quoted(sortItem.getColumn().getColumnName())),
                                         columnSorting);
                         }
-                        throw new UnsupportedOperationException("Unsupported sort order: " + sortItem.sortOrder());
+                        throw new UnsupportedOperationException("Unsupported sort order: " + sortItem.getSortOrder());
                     })
                     .collect(joining(", "));
             return format("%s ORDER BY %s LIMIT %s", query, orderBy, limit);
@@ -795,11 +795,11 @@ public class MariaDbClient
 
     private static Optional<ColumnMapping> getUnsignedMapping(JdbcTypeHandle typeHandle)
     {
-        if (typeHandle.jdbcTypeName().isEmpty()) {
+        if (typeHandle.getJdbcTypeName().isEmpty()) {
             return Optional.empty();
         }
 
-        String typeName = typeHandle.jdbcTypeName().get();
+        String typeName = typeHandle.getJdbcTypeName().get();
         if (typeName.equalsIgnoreCase("tinyint unsigned")) {
             return Optional.of(smallintColumnMapping());
         }

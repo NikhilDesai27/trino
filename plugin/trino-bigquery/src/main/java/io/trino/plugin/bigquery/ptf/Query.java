@@ -40,7 +40,6 @@ import io.trino.spi.function.table.Descriptor.Field;
 import io.trino.spi.function.table.ScalarArgument;
 import io.trino.spi.function.table.ScalarArgumentSpecification;
 import io.trino.spi.function.table.TableFunctionAnalysis;
-import io.trino.spi.predicate.TupleDomain;
 
 import java.util.List;
 import java.util.Map;
@@ -108,7 +107,7 @@ public class Query
             Schema schema = client.getSchema(query);
 
             BigQueryQueryRelationHandle queryRelationHandle = new BigQueryQueryRelationHandle(query);
-            BigQueryTableHandle tableHandle = new BigQueryTableHandle(queryRelationHandle, TupleDomain.all(), Optional.empty());
+            BigQueryTableHandle tableHandle = new BigQueryTableHandle(queryRelationHandle);
 
             ImmutableList.Builder<BigQueryColumnHandle> columnsBuilder = ImmutableList.builderWithExpectedSize(schema.getFields().size());
             for (com.google.cloud.bigquery.Field field : schema.getFields()) {
@@ -119,7 +118,7 @@ public class Query
             }
 
             Descriptor returnedType = new Descriptor(columnsBuilder.build().stream()
-                    .map(column -> new Field(column.name(), Optional.of(column.trinoType())))
+                    .map(column -> new Field(column.getName(), Optional.of(column.getTrinoType())))
                     .collect(toList()));
 
             QueryHandle handle = new QueryHandle(tableHandle.withProjectedColumns(columnsBuilder.build()));

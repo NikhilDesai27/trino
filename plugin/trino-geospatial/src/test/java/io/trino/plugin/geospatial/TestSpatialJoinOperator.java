@@ -51,7 +51,6 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
@@ -481,7 +480,6 @@ public class TestSpatialJoinOperator
                 Ints.asList(1),
                 0,
                 radiusChannel,
-                OptionalDouble.empty(),
                 partitionChannel,
                 spatialRelationshipTest,
                 kdbTreeJson,

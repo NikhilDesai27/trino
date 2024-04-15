@@ -190,7 +190,9 @@ public final class KuduTableProperties
         @SuppressWarnings("unchecked")
         List<String> rangeColumns = (List<String>) tableProperties.get(PARTITION_BY_RANGE_COLUMNS);
         if (!rangeColumns.isEmpty()) {
-            design.setRange(new RangePartitionDefinition(rangeColumns));
+            RangePartitionDefinition range = new RangePartitionDefinition();
+            range.setColumns(rangeColumns);
+            design.setRange(range);
         }
 
         return design;
@@ -232,7 +234,10 @@ public final class KuduTableProperties
         if (hashBuckets == null) {
             throw new TrinoException(GENERIC_USER_ERROR, "Missing table property " + bucketPropertyName);
         }
-        return new HashPartitionDefinition(columns, hashBuckets);
+        HashPartitionDefinition definition = new HashPartitionDefinition();
+        definition.setColumns(columns);
+        definition.setBuckets(hashBuckets);
+        return definition;
     }
 
     public static List<RangePartition> getRangePartitions(Map<String, Object> tableProperties)
@@ -280,17 +285,17 @@ public final class KuduTableProperties
             if (partitionDesign.getHash() != null) {
                 List<HashPartitionDefinition> list = partitionDesign.getHash();
                 if (!list.isEmpty()) {
-                    properties.put(PARTITION_BY_HASH_COLUMNS, list.get(0).columns());
-                    properties.put(PARTITION_BY_HASH_BUCKETS, list.get(0).buckets());
+                    properties.put(PARTITION_BY_HASH_COLUMNS, list.get(0).getColumns());
+                    properties.put(PARTITION_BY_HASH_BUCKETS, list.get(0).getBuckets());
                 }
                 if (list.size() >= 2) {
-                    properties.put(PARTITION_BY_HASH_COLUMNS_2, list.get(1).columns());
-                    properties.put(PARTITION_BY_HASH_BUCKETS_2, list.get(1).buckets());
+                    properties.put(PARTITION_BY_HASH_COLUMNS_2, list.get(1).getColumns());
+                    properties.put(PARTITION_BY_HASH_BUCKETS_2, list.get(1).getBuckets());
                 }
             }
 
             if (partitionDesign.getRange() != null) {
-                properties.put(PARTITION_BY_RANGE_COLUMNS, partitionDesign.getRange().columns());
+                properties.put(PARTITION_BY_RANGE_COLUMNS, partitionDesign.getRange().getColumns());
             }
 
             String partitionRangesValue = mapper.writeValueAsString(rangePartitionList);
@@ -395,17 +400,22 @@ public final class KuduTableProperties
 
         List<HashPartitionDefinition> hashPartitions = partitionSchema.getHashBucketSchemas().stream()
                 .map(hashBucketSchema -> {
+                    HashPartitionDefinition hash = new HashPartitionDefinition();
                     List<String> cols = hashBucketSchema.getColumnIds().stream()
                             .map(idx -> schema.getColumnByIndex(idx).getName()).collect(toImmutableList());
-                    return new HashPartitionDefinition(cols, hashBucketSchema.getNumBuckets());
+                    hash.setColumns(cols);
+                    hash.setBuckets(hashBucketSchema.getNumBuckets());
+                    return hash;
                 }).collect(toImmutableList());
         partitionDesign.setHash(hashPartitions);
 
         List<Integer> rangeColumns = partitionSchema.getRangeSchema().getColumnIds();
         if (!rangeColumns.isEmpty()) {
-            partitionDesign.setRange(new RangePartitionDefinition(rangeColumns.stream()
+            RangePartitionDefinition definition = new RangePartitionDefinition();
+            definition.setColumns(rangeColumns.stream()
                     .map(i -> schema.getColumns().get(i).getName())
-                    .collect(toImmutableList())));
+                    .collect(toImmutableList()));
+            partitionDesign.setRange(definition);
         }
 
         return partitionDesign;
@@ -416,7 +426,7 @@ public final class KuduTableProperties
     {
         PartialRow partialRow = new PartialRow(schema);
         if (boundValue != null) {
-            List<Integer> rangeColumns = definition.columns().stream()
+            List<Integer> rangeColumns = definition.getColumns().stream()
                     .map(schema::getColumnIndex).collect(toImmutableList());
 
             if (rangeColumns.size() != boundValue.getValues().size()) {

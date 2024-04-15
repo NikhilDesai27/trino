@@ -14,7 +14,6 @@
 package io.trino.execution;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.trino.execution.warnings.WarningCollector;
 import io.trino.metadata.QualifiedObjectName;
@@ -69,7 +68,7 @@ public class TestRenameTableTask
     public void testRenameTableOnView()
     {
         QualifiedObjectName viewName = qualifiedObjectName("existing_view");
-        metadata.createView(testSession, viewName, someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, viewName, someView(), false);
 
         assertTrinoExceptionThrownBy(() -> getFutureValue(executeRenameTable(asQualifiedName(viewName), qualifiedName("existing_view_new"), false)))
                 .hasErrorCode(GENERIC_USER_ERROR)
@@ -80,7 +79,7 @@ public class TestRenameTableTask
     public void testRenameTableOnViewIfExists()
     {
         QualifiedObjectName viewName = qualifiedObjectName("existing_view");
-        metadata.createView(testSession, viewName, someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, viewName, someView(), false);
 
         assertTrinoExceptionThrownBy(() -> getFutureValue(executeRenameTable(asQualifiedName(viewName), qualifiedName("existing_view_new"), true)))
                 .hasErrorCode(GENERIC_USER_ERROR)
@@ -115,7 +114,7 @@ public class TestRenameTableTask
         QualifiedObjectName tableName = qualifiedObjectName("existing_table");
         metadata.createTable(testSession, TEST_CATALOG_NAME, someTable(tableName), FAIL);
         QualifiedName viewName = qualifiedName("existing_view");
-        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), false);
 
         assertTrinoExceptionThrownBy(() -> getFutureValue(executeRenameTable(asQualifiedName(tableName), viewName, false)))
                 .hasErrorCode(GENERIC_USER_ERROR)

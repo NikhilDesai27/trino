@@ -60,10 +60,10 @@ public class MemoryPageSinkProvider
     public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorOutputTableHandle outputTableHandle, ConnectorPageSinkId pageSinkId)
     {
         MemoryOutputTableHandle memoryOutputTableHandle = (MemoryOutputTableHandle) outputTableHandle;
-        long tableId = memoryOutputTableHandle.table();
-        checkState(memoryOutputTableHandle.activeTableIds().contains(tableId));
+        long tableId = memoryOutputTableHandle.getTable();
+        checkState(memoryOutputTableHandle.getActiveTableIds().contains(tableId));
 
-        pagesStore.cleanUp(memoryOutputTableHandle.activeTableIds());
+        pagesStore.cleanUp(memoryOutputTableHandle.getActiveTableIds());
         pagesStore.initialize(tableId);
         return new MemoryPageSink(pagesStore, currentHostAddress, tableId);
     }

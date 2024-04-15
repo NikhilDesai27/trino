@@ -84,7 +84,7 @@ public class CounterBasedAnonymizer
     @Override
     public String anonymize(Symbol symbol)
     {
-        return anonymize(symbol.name(), ObjectType.SYMBOL);
+        return anonymize(symbol.getName(), ObjectType.SYMBOL);
     }
 
     @Override

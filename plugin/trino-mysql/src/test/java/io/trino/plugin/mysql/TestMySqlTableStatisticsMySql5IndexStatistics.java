@@ -11,19 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.trino.hive.formats.avro.model;
+package io.trino.plugin.mysql;
 
-import org.apache.avro.Schema;
-
-import static java.util.Objects.requireNonNull;
-
-public record ArrayReadAction(Schema readSchema, Schema writeSchema, AvroReadAction elementReadAction)
-        implements AvroReadAction
+public class TestMySqlTableStatisticsMySql5IndexStatistics
+        extends BaseMySqlTableStatisticsIndexStatisticsTest
 {
-    public ArrayReadAction
+    public TestMySqlTableStatisticsMySql5IndexStatistics()
     {
-        requireNonNull(readSchema, "readSchema is null");
-        requireNonNull(writeSchema, "writeSchema is null");
-        requireNonNull(elementReadAction, "elementReadAction is null");
+        super("mysql:5.5.46"); // oldest available on RDS
     }
 }

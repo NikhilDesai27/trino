@@ -23,7 +23,6 @@ import io.trino.plugin.base.security.DefaultSystemAccessControl;
 import io.trino.security.AccessControlConfig;
 import io.trino.security.AccessControlManager;
 import io.trino.security.SecurityContext;
-import io.trino.spi.QueryId;
 import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
@@ -270,13 +269,13 @@ public class TestingAccessControlManager
     }
 
     @Override
-    public void checkCanExecuteQuery(Identity identity, QueryId queryId)
+    public void checkCanExecuteQuery(Identity identity)
     {
         if (shouldDenyPrivilege(identity.getUser(), "query", EXECUTE_QUERY)) {
             denyExecuteQuery();
         }
         if (denyPrivileges.isEmpty()) {
-            super.checkCanExecuteQuery(identity, queryId);
+            super.checkCanExecuteQuery(identity);
         }
     }
 
@@ -552,13 +551,13 @@ public class TestingAccessControlManager
     }
 
     @Override
-    public void checkCanSetSystemSessionProperty(Identity identity, QueryId queryId, String propertyName)
+    public void checkCanSetSystemSessionProperty(Identity identity, String propertyName)
     {
         if (shouldDenyPrivilege(identity.getUser(), propertyName, SET_SESSION)) {
             denySetSystemSessionProperty(propertyName);
         }
         if (denyPrivileges.isEmpty()) {
-            super.checkCanSetSystemSessionProperty(identity, queryId, propertyName);
+            super.checkCanSetSystemSessionProperty(identity, propertyName);
         }
     }
 

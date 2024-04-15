@@ -81,7 +81,7 @@ public class ExampleClient
         if (mapping.isPresent()) {
             return mapping;
         }
-        switch (typeHandle.jdbcType()) {
+        switch (typeHandle.getJdbcType()) {
             case Types.SMALLINT:
                 return Optional.of(smallintColumnMapping());
 
@@ -98,10 +98,10 @@ public class ExampleClient
                 return Optional.of(doubleColumnMapping());
 
             case Types.CHAR:
-                return Optional.of(charColumnMapping(typeHandle.requiredColumnSize()));
+                return Optional.of(charColumnMapping(typeHandle.getRequiredColumnSize()));
 
             case Types.VARCHAR:
-                return Optional.of(varcharColumnMapping(typeHandle.requiredColumnSize()));
+                return Optional.of(varcharColumnMapping(typeHandle.getRequiredColumnSize()));
         }
 
         if (getUnsupportedTypeHandling(session) == CONVERT_TO_VARCHAR) {

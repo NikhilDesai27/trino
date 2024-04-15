@@ -46,7 +46,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.weakref.jmx.Flatten;
 import org.weakref.jmx.Managed;
-import org.weakref.jmx.Nested;
 
 import java.util.List;
 import java.util.Optional;
@@ -139,13 +138,6 @@ public class DispatchManager
         return stats;
     }
 
-    @Managed
-    @Nested
-    public QueryTracker<DispatchQuery> getQueryTracker()
-    {
-        return queryTracker;
-    }
-
     public QueryId createQueryId()
     {
         return queryIdGenerator.createNextQueryId();
@@ -198,7 +190,7 @@ public class DispatchManager
             session = sessionSupplier.createSession(queryId, querySpan, sessionContext);
 
             // check query execute permissions
-            accessControl.checkCanExecuteQuery(sessionContext.getIdentity(), queryId);
+            accessControl.checkCanExecuteQuery(sessionContext.getIdentity());
 
             // prepare query
             preparedQuery = queryPreparer.prepareQuery(session, query);

@@ -104,10 +104,10 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * For example:
  * <ul>
- * <li>{@code SELECT ... FROM a, b WHERE ST_Contains(b.geometry, a.geometry)}</li>
- * <li>{@code SELECT ... FROM a, b WHERE ST_Intersects(b.geometry, a.geometry)}</li>
- * <li>{@code SELECT ... FROM a, b WHERE ST_Distance(b.geometry, a.geometry) <= 300}</li>
- * <li>{@code SELECT ... FROM a, b WHERE 15.5 > ST_Distance(b.geometry, a.geometry)}</li>
+ * <li>SELECT ... FROM a, b WHERE ST_Contains(b.geometry, a.geometry)</li>
+ * <li>SELECT ... FROM a, b WHERE ST_Intersects(b.geometry, a.geometry)</li>
+ * <li>SELECT ... FROM a, b WHERE ST_Distance(b.geometry, a.geometry) <= 300</li>
+ * <li>SELECT ... FROM a, b WHERE 15.5 > ST_Distance(b.geometry, a.geometry)</li>
  * </ul>
  * <p>
  * Joins expressed via ST_Contains and ST_Intersects functions must match all of
@@ -132,18 +132,18 @@ import static java.util.Objects.requireNonNull;
  * Examples:
  * <pre>
  * Point-in-polygon inner join
- *      {@code ST_Contains(ST_GeometryFromText(a.wkt), ST_Point(b.longitude, b.latitude))}
+ *      ST_Contains(ST_GeometryFromText(a.wkt), ST_Point(b.longitude, b.latitude))
  * becomes a spatial join
- *      {@code ST_Contains(st_geometryfromtext, st_point)}
- * with {@code st_geometryfromtext -> 'ST_GeometryFromText(a.wkt)'} and
- * {@code st_point -> 'ST_Point(b.longitude, b.latitude)'} projections on top of child nodes.
+ *      ST_Contains(st_geometryfromtext, st_point)
+ * with st_geometryfromtext -> 'ST_GeometryFromText(a.wkt)' and
+ * st_point -> 'ST_Point(b.longitude, b.latitude)' projections on top of child nodes.
  *
  * Distance query
- *      {@code ST_Distance(ST_Point(a.lon, a.lat), ST_Point(b.lon, b.lat)) <= 10 / (111.321 * cos(radians(b.lat)))}
+ *      ST_Distance(ST_Point(a.lon, a.lat), ST_Point(b.lon, b.lat)) <= 10 / (111.321 * cos(radians(b.lat)))
  * becomes a spatial join
- *      {@code ST_Distance(st_point_a, st_point_b) <= radius}
- * with {@code st_point_a -> 'ST_Point(a.lon, a.lat)', st_point_b -> 'ST_Point(b.lon, b.lat)'}
- * and {@code radius -> '10 / (111.321 * cos(radians(b.lat)))'} projections on top of child nodes.
+ *      ST_Distance(st_point_a, st_point_b) <= radius
+ * with st_point_a -> 'ST_Point(a.lon, a.lat)', st_point_b -> 'ST_Point(b.lon, b.lat)'
+ * and radius -> '10 / (111.321 * cos(radians(b.lat)))' projections on top of child nodes.
  * </pre>
  */
 public class ExtractSpatialJoins

@@ -108,7 +108,6 @@ public class SqlTask
     private final AtomicReference<Span> taskSpan = new AtomicReference<>(Span.getInvalid());
     private final AtomicReference<String> traceToken = new AtomicReference<>();
     private final AtomicReference<Set<CatalogHandle>> catalogs = new AtomicReference<>();
-    private final AtomicBoolean catalogsLoaded = new AtomicBoolean(false);
 
     public static SqlTask createSqlTask(
             TaskId taskId,
@@ -290,16 +289,6 @@ public class SqlTask
     {
         requireNonNull(catalogs, "catalogs is null");
         return this.catalogs.compareAndSet(null, requireNonNull(catalogs, "catalogs is null"));
-    }
-
-    public boolean catalogsLoaded()
-    {
-        return catalogsLoaded.get();
-    }
-
-    public boolean setCatalogsLoaded()
-    {
-        return catalogsLoaded.compareAndSet(false, true);
     }
 
     public VersionedDynamicFilterDomains acknowledgeAndGetNewDynamicFilterDomains(long callersDynamicFiltersVersion)

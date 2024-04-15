@@ -117,7 +117,7 @@ public final class DomainTranslator
 
         Map<Symbol, Domain> domains = tupleDomain.getDomains().get();
         return domains.entrySet().stream()
-                .sorted(Comparator.comparing(e -> e.getKey().name()))
+                .sorted(Comparator.comparing(e -> e.getKey().getName()))
                 .map(entry -> toPredicate(entry.getValue(), entry.getKey().toSymbolReference()))
                 .collect(collectingAndThen(toImmutableList(), IrUtils::combineConjuncts));
     }
@@ -1116,7 +1116,7 @@ public final class DomainTranslator
             }
 
             Symbol symbol = Symbol.from(node.value());
-            Type columnType = symbol.type();
+            Type columnType = symbol.getType();
             Domain domain = complementIfNecessary(Domain.onlyNull(columnType), complement);
             return new ExtractionResult(
                     TupleDomain.withColumnDomains(ImmutableMap.of(symbol, domain)),

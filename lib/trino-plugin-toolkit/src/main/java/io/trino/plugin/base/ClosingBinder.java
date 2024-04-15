@@ -24,6 +24,7 @@ import jakarta.annotation.PreDestroy;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.Set;
@@ -34,7 +35,6 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static java.util.Objects.requireNonNull;
 
 public class ClosingBinder
 {
@@ -53,43 +53,50 @@ public class ClosingBinder
         binder.bind(Cleanup.class).asEagerSingleton();
     }
 
-    public void registerExecutor(Class<? extends ExecutorService> type)
+    public ClosingBinder registerExecutor(Class<? extends ExecutorService> type)
     {
-        registerExecutor(Key.get(type));
+        executors.addBinding().to(type);
+        return this;
     }
 
-    public void registerExecutor(Key<? extends ExecutorService> key)
+    public ClosingBinder registerExecutor(Class<? extends ExecutorService> type, Class<? extends Annotation> annotation)
     {
-        executors.addBinding().to(requireNonNull(key, "key is null"));
+        executors.addBinding().to(Key.get(type, annotation));
+        return this;
     }
 
-    public void registerCloseable(Class<? extends Closeable> type)
+    public ClosingBinder registerCloseable(Class<? extends Closeable> type)
     {
-        registerCloseable(Key.get(type));
+        closeables.addBinding().to(type);
+        return this;
     }
 
-    public void registerCloseable(Key<? extends Closeable> key)
+    public ClosingBinder registerCloseable(Class<? extends Closeable> type, Class<? extends Annotation> annotation)
     {
-        closeables.addBinding().to(key);
+        closeables.addBinding().to(Key.get(type, annotation));
+        return this;
     }
 
-    private record Cleanup(
-            @ForCleanup Set<ExecutorService> executors,
-            @ForCleanup Set<Closeable> closeables)
+    private static class Cleanup
     {
+        private final Set<ExecutorService> executors;
+        private final Set<Closeable> closeables;
+
         @Inject
-        private Cleanup
+        public Cleanup(
+                @ForCleanup Set<ExecutorService> executors,
+                @ForCleanup Set<Closeable> closeables)
         {
-            executors = ImmutableSet.copyOf(executors);
-            closeables = ImmutableSet.copyOf(closeables);
+            this.executors = ImmutableSet.copyOf(executors);
+            this.closeables = ImmutableSet.copyOf(closeables);
         }
 
         @PreDestroy
         public void shutdown()
                 throws IOException
         {
+            executors.forEach(ExecutorService::shutdownNow);
             try (Closer closer = Closer.create()) {
-                executors.forEach(executor -> closer.register(executor::shutdownNow));
                 closeables.forEach(closer::register);
             }
         }

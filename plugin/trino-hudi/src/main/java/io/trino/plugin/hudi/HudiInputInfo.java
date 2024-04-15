@@ -11,21 +11,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.trino.hive.formats.avro.model;
+package io.trino.plugin.hudi;
 
-import org.apache.avro.Schema;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Verify.verify;
+import java.util.List;
+
 import static java.util.Objects.requireNonNull;
 
-public record StringRead(Schema readSchema, Schema writeSchema)
-        implements AvroReadAction
+public class HudiInputInfo
 {
-    public StringRead
+    private final List<String> partitionIds;
+
+    @JsonCreator
+    public HudiInputInfo(@JsonProperty("partitionIds") List<String> partitionIds)
     {
-        requireNonNull(readSchema, "readSchema is null");
-        requireNonNull(writeSchema, "writeSchema is null");
-        verify(readSchema.getType() == Schema.Type.STRING);
-        verify(writeSchema.getType() == Schema.Type.STRING || writeSchema.getType() == Schema.Type.BYTES);
+        this.partitionIds = ImmutableList.copyOf(requireNonNull(partitionIds, "partitionIds is null"));
+    }
+
+    @JsonProperty
+    public List<String> getPartitionIds()
+    {
+        return partitionIds;
     }
 }

@@ -72,7 +72,7 @@ public final class LambdaCaptureDesugaringRewriter
             ImmutableMap.Builder<Symbol, Symbol> captureSymbolToExtraSymbol = ImmutableMap.builder();
             ImmutableList.Builder<Symbol> newLambdaArguments = ImmutableList.builder();
             for (Symbol captureSymbol : captureSymbols) {
-                Symbol extraSymbol = symbolAllocator.newSymbol(captureSymbol.name(), captureSymbol.type());
+                Symbol extraSymbol = symbolAllocator.newSymbol(captureSymbol.getName(), captureSymbol.getType());
                 captureSymbolToExtraSymbol.put(captureSymbol, extraSymbol);
                 newLambdaArguments.add(extraSymbol);
             }
@@ -85,7 +85,7 @@ public final class LambdaCaptureDesugaringRewriter
             Expression rewrittenExpression = lambda;
             if (captureSymbols.size() != 0) {
                 List<Expression> capturedValues = captureSymbols.stream()
-                        .map(symbol -> new Reference(symbol.type(), symbol.name()))
+                        .map(symbol -> new Reference(symbol.getType(), symbol.getName()))
                         .collect(toImmutableList());
                 rewrittenExpression = new Bind(capturedValues, lambda);
             }

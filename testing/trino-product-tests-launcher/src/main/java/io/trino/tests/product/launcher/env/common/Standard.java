@@ -77,7 +77,6 @@ public final class Standard
     /**
      * @deprecated please use {@link EnvironmentContainers#configureTempto} instead.
      */
-    @Deprecated
     public static final String CONTAINER_TEMPTO_PROFILE_CONFIG = "/docker/presto-product-tests/conf/tempto/tempto-configuration-profile-config-file.yaml";
 
     private final DockerFiles dockerFiles;

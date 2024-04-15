@@ -87,10 +87,11 @@ public class InlineProjections
 
         // inline the expressions
         Assignments assignments = child.getAssignments().filter(targets::contains);
-        Assignments.Builder parentAssignments = Assignments.builder();
-        for (Map.Entry<Symbol, Expression> assignment : parent.getAssignments().entrySet()) {
-            parentAssignments.put(assignment.getKey(), inlineReferences(assignment.getValue(), assignments));
-        }
+        Map<Symbol, Expression> parentAssignments = parent.getAssignments()
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> inlineReferences(entry.getValue(), assignments)));
 
         // Synthesize identity assignments for the inputs of expressions that were inlined
         // to place in the child projection.
@@ -131,7 +132,7 @@ public class InlineProjections
                 new ProjectNode(
                         parent.getId(),
                         newChild,
-                        parentAssignments.build()));
+                        Assignments.copyOf(parentAssignments)));
     }
 
     private static Expression inlineReferences(Expression expression, Assignments assignments)
@@ -195,6 +196,6 @@ public class InlineProjections
 
     private static boolean isSymbolReference(Symbol symbol, Expression expression)
     {
-        return expression instanceof Reference reference && reference.name().equals(symbol.name());
+        return expression instanceof Reference reference && reference.name().equals(symbol.getName());
     }
 }

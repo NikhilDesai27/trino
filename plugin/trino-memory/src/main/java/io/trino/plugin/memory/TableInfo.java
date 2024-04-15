@@ -13,7 +13,6 @@
  */
 package io.trino.plugin.memory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.trino.spi.HostAddress;
@@ -30,30 +29,46 @@ import static com.google.common.collect.MoreCollectors.onlyElement;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.requireNonNull;
 
-public record TableInfo(
-        long id,
-        String schemaName,
-        String tableName,
-        List<ColumnInfo> columns,
-        Map<HostAddress, MemoryDataFragment> dataFragments,
-        Optional<String> comment)
+public class TableInfo
 {
-    public TableInfo
+    private final long id;
+    private final String schemaName;
+    private final String tableName;
+    private final List<ColumnInfo> columns;
+    private final Map<HostAddress, MemoryDataFragment> dataFragments;
+
+    private final Optional<String> comment;
+
+    public TableInfo(long id, String schemaName, String tableName, List<ColumnInfo> columns, Map<HostAddress, MemoryDataFragment> dataFragments, Optional<String> comment)
     {
-        requireNonNull(schemaName, "schemaName is null");
-        requireNonNull(tableName, "tableName is null");
-        columns = ImmutableList.copyOf(columns);
-        dataFragments = ImmutableMap.copyOf(dataFragments);
-        requireNonNull(comment, "comment is null");
+        this.id = id;
+        this.schemaName = requireNonNull(schemaName, "schemaName is null");
+        this.tableName = requireNonNull(tableName, "tableName is null");
+        this.columns = ImmutableList.copyOf(columns);
+        this.dataFragments = ImmutableMap.copyOf(dataFragments);
+        this.comment = requireNonNull(comment, "comment is null");
     }
 
-    @JsonIgnore
+    public long getId()
+    {
+        return id;
+    }
+
+    public String getSchemaName()
+    {
+        return schemaName;
+    }
+
+    public String getTableName()
+    {
+        return tableName;
+    }
+
     public SchemaTableName getSchemaTableName()
     {
         return new SchemaTableName(schemaName, tableName);
     }
 
-    @JsonIgnore
     public ConnectorTableMetadata getMetadata()
     {
         return new ConnectorTableMetadata(
@@ -65,11 +80,25 @@ public record TableInfo(
                 comment);
     }
 
-    @JsonIgnore
+    public List<ColumnInfo> getColumns()
+    {
+        return columns;
+    }
+
     public ColumnInfo getColumn(ColumnHandle handle)
     {
         return columns.stream()
-                .filter(column -> column.handle().equals(handle))
+                .filter(column -> column.getHandle().equals(handle))
                 .collect(onlyElement());
+    }
+
+    public Map<HostAddress, MemoryDataFragment> getDataFragments()
+    {
+        return dataFragments;
+    }
+
+    public Optional<String> getComment()
+    {
+        return comment;
     }
 }

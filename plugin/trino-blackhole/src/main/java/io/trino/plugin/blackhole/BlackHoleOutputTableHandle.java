@@ -13,19 +13,37 @@
  */
 package io.trino.plugin.blackhole;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.airlift.units.Duration;
 import io.trino.spi.connector.ConnectorOutputTableHandle;
 
 import static java.util.Objects.requireNonNull;
 
-public record BlackHoleOutputTableHandle(
-        BlackHoleTableHandle table,
-        Duration pageProcessingDelay)
+public final class BlackHoleOutputTableHandle
         implements ConnectorOutputTableHandle
 {
-    public BlackHoleOutputTableHandle
+    private final BlackHoleTableHandle table;
+    private final Duration pageProcessingDelay;
+
+    @JsonCreator
+    public BlackHoleOutputTableHandle(
+            @JsonProperty("table") BlackHoleTableHandle table,
+            @JsonProperty("pageProcessingDelay") Duration pageProcessingDelay)
     {
-        requireNonNull(table, "table is null");
-        requireNonNull(pageProcessingDelay, "pageProcessingDelay is null");
+        this.table = requireNonNull(table, "table is null");
+        this.pageProcessingDelay = requireNonNull(pageProcessingDelay, "pageProcessingDelay is null");
+    }
+
+    @JsonProperty
+    public BlackHoleTableHandle getTable()
+    {
+        return table;
+    }
+
+    @JsonProperty
+    public Duration getPageProcessingDelay()
+    {
+        return pageProcessingDelay;
     }
 }

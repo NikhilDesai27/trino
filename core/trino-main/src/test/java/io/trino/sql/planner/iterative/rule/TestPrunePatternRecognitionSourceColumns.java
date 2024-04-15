@@ -37,6 +37,7 @@ import static io.trino.sql.planner.assertions.PlanMatchPattern.strictProject;
 import static io.trino.sql.planner.assertions.PlanMatchPattern.values;
 import static io.trino.sql.planner.plan.RowsPerMatch.ALL_SHOW_EMPTY;
 import static io.trino.sql.planner.plan.RowsPerMatch.ONE;
+import static io.trino.type.UnknownType.UNKNOWN;
 
 public class TestPrunePatternRecognitionSourceColumns
         extends BaseRuleTest
@@ -104,15 +105,15 @@ public class TestPrunePatternRecognitionSourceColumns
         tester().assertThat(new PrunePatternRecognitionSourceColumns())
                 .on(p -> p.patternRecognition(builder -> builder
                         .addMeasure(
-                                p.symbol("measure", BIGINT),
+                                p.symbol("measure"),
                                 new Reference(BIGINT, "pointer"),
                                 ImmutableMap.of("pointer", new ScalarValuePointer(
                                         new LogicalIndexPointer(ImmutableSet.of(new IrLabel("X")), true, true, 0, 0),
-                                        new Symbol(BIGINT, "a"))))
+                                        new Symbol(UNKNOWN, "a"))))
                         .rowsPerMatch(ONE)
                         .pattern(new IrLabel("X"))
                         .addVariableDefinition(new IrLabel("X"), TRUE)
-                        .source(p.values(p.symbol("a", BIGINT)))))
+                        .source(p.values(p.symbol("a")))))
                 .doesNotFire();
     }
 

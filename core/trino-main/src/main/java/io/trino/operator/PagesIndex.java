@@ -49,7 +49,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -506,7 +505,6 @@ public class PagesIndex
             Session session,
             int geometryChannel,
             Optional<Integer> radiusChannel,
-            OptionalDouble constantRadius,
             Optional<Integer> partitionChannel,
             SpatialPredicate spatialRelationshipTest,
             Optional<JoinFilterFunctionFactory> filterFunctionFactory,
@@ -515,7 +513,7 @@ public class PagesIndex
     {
         // TODO probably shouldn't copy to reduce memory and for memory accounting's sake
         List<ObjectArrayList<Block>> channels = ImmutableList.copyOf(this.channels);
-        return new PagesSpatialIndexSupplier(session, valueAddresses, types, outputChannels, channels, geometryChannel, radiusChannel, constantRadius, partitionChannel, spatialRelationshipTest, filterFunctionFactory, partitions);
+        return new PagesSpatialIndexSupplier(session, valueAddresses, types, outputChannels, channels, geometryChannel, radiusChannel, partitionChannel, spatialRelationshipTest, filterFunctionFactory, partitions);
     }
 
     public LookupSourceSupplier createLookupSourceSupplier(

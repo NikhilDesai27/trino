@@ -37,12 +37,13 @@ public record TableChangesSplit(
 {
     private static final int INSTANCE_SIZE = instanceSize(TableChangesSplit.class);
 
+    @JsonIgnore
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return ImmutableMap.<String, String>builder()
+        return ImmutableMap.builder()
                 .put("path", path)
-                .put("length", String.valueOf(fileSize))
+                .put("length", fileSize)
                 .buildOrThrow();
     }
 

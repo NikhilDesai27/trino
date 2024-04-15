@@ -20,12 +20,14 @@ import io.airlift.json.JsonCodec;
 import io.airlift.json.JsonCodecFactory;
 import io.airlift.json.ObjectMapperProvider;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.connector.SortItem;
 import io.trino.spi.predicate.TupleDomain;
 import io.trino.spi.type.RowType;
 import io.trino.spi.type.Type;
 import io.trino.type.TypeDeserializer;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -56,8 +58,8 @@ public class TestMongoTableHandle
         String json = codec.toJson(expected);
         MongoTableHandle actual = codec.fromJson(json);
 
-        assertThat(actual.schemaTableName())
-                .isEqualTo(expected.schemaTableName());
+        assertThat(actual.getSchemaTableName())
+                .isEqualTo(expected.getSchemaTableName());
     }
 
     @Test
@@ -70,8 +72,8 @@ public class TestMongoTableHandle
         String json = codec.toJson(expected);
         MongoTableHandle actual = codec.fromJson(json);
 
-        assertThat(actual.schemaTableName())
-                .isEqualTo(expected.schemaTableName());
+        assertThat(actual.getSchemaTableName())
+                .isEqualTo(expected.getSchemaTableName());
     }
 
     @Test
@@ -84,8 +86,8 @@ public class TestMongoTableHandle
         String json = codec.toJson(expected);
         MongoTableHandle actual = codec.fromJson(json);
 
-        assertThat(actual.schemaTableName())
-                .isEqualTo(expected.schemaTableName());
+        assertThat(actual.getSchemaTableName())
+                .isEqualTo(expected.getSchemaTableName());
     }
 
     @Test
@@ -98,8 +100,8 @@ public class TestMongoTableHandle
         String json = codec.toJson(expected);
         MongoTableHandle actual = codec.fromJson(json);
 
-        assertThat(actual.schemaTableName())
-                .isEqualTo(expected.schemaTableName());
+        assertThat(actual.getSchemaTableName())
+                .isEqualTo(expected.getSchemaTableName());
     }
 
     @Test
@@ -119,13 +121,15 @@ public class TestMongoTableHandle
                         Optional.empty()),
                 new MongoColumnHandle("creator", ImmutableList.of("databasename"), VARCHAR, false, true, Optional.empty()));
 
+        List<SortItem> si = List.of();
         MongoTableHandle expected = new MongoTableHandle(
                 schemaTableName,
                 remoteTableName,
                 Optional.empty(),
                 TupleDomain.all(),
                 projectedColumns,
-                OptionalInt.empty());
+                OptionalInt.empty(),
+                si);
 
         String json = codec.toJson(expected);
         MongoTableHandle actual = codec.fromJson(json);

@@ -17,14 +17,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.airlift.slice.SizeOf;
 import io.trino.spi.HostAddress;
 import io.trino.spi.connector.ConnectorSplit;
 import org.apache.accumulo.core.data.Range;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -33,7 +31,6 @@ import static io.airlift.slice.SizeOf.estimatedSizeOf;
 import static io.airlift.slice.SizeOf.instanceSize;
 import static io.airlift.slice.SizeOf.sizeOf;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 
 public class AccumuloSplit
         implements ConnectorSplit
@@ -86,9 +83,9 @@ public class AccumuloSplit
     }
 
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return ImmutableMap.of("addresses", addresses.stream().map(HostAddress::toString).collect(joining(",")), "numRanges", String.valueOf(ranges.size()));
+        return this;
     }
 
     @Override

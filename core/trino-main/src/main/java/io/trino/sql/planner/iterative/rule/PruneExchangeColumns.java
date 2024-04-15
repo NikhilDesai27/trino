@@ -75,7 +75,7 @@ public class PruneExchangeColumns
         builder.addAll(referencedOutputs);
         builder.addAll(exchangeNode.getPartitioningScheme().getPartitioning().getColumns());
         exchangeNode.getPartitioningScheme().getHashColumn().ifPresent(builder::add);
-        exchangeNode.getOrderingScheme().ifPresent(orderingScheme -> builder.addAll(orderingScheme.orderBy()));
+        exchangeNode.getOrderingScheme().ifPresent(orderingScheme -> builder.addAll(orderingScheme.getOrderBy()));
         Set<Symbol> outputsToRetain = builder.build();
 
         if (outputsToRetain.size() == exchangeNode.getOutputSymbols().size()) {

@@ -82,6 +82,7 @@ import static java.util.Objects.requireNonNull;
  *       - AssignUniqueId (A')
  *         - A
  * </pre>
+ * <p>
  *
  * @see TransformCorrelatedGlobalAggregationWithProjection
  */

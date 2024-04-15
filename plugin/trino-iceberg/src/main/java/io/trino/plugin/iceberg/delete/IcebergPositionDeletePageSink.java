@@ -135,7 +135,7 @@ public class IcebergPositionDeletePageSink
                     partition.map(PartitionData::toJson),
                     FileContent.POSITION_DELETES,
                     Optional.of(dataFilePath));
-            Long recordCount = task.metrics().recordCount();
+            Long recordCount = task.getMetrics().recordCount();
             if (recordCount != null && recordCount > 0) {
                 commitTasks.add(wrappedBuffer(jsonCodec.toJsonBytes(task)));
             }

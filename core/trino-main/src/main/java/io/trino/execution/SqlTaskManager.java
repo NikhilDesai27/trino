@@ -338,7 +338,6 @@ public class SqlTaskManager
         }
         taskNotificationExecutor.shutdownNow();
         driverYieldExecutor.shutdownNow();
-        driverTimeoutExecutor.shutdownNow();
     }
 
     @Managed
@@ -537,13 +536,11 @@ public class SqlTaskManager
                     Set<CatalogHandle> catalogHandles = activeCatalogs.stream()
                             .map(CatalogProperties::catalogHandle)
                             .collect(toImmutableSet());
-                    sqlTask.setCatalogs(catalogHandles);
-                    if (!sqlTask.catalogsLoaded()) {
+                    if (sqlTask.setCatalogs(catalogHandles)) {
                         ReentrantReadWriteLock.ReadLock catalogInitLock = catalogsLock.readLock();
                         catalogInitLock.lock();
                         try {
                             connectorServicesProvider.ensureCatalogsLoaded(session, activeCatalogs);
-                            sqlTask.setCatalogsLoaded();
                         }
                         finally {
                             catalogInitLock.unlock();

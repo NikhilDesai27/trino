@@ -13,7 +13,6 @@
  */
 package io.trino.plugin.base.security;
 
-import io.trino.spi.QueryId;
 import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
@@ -89,12 +88,6 @@ public abstract class ForwardingSystemAccessControl
     }
 
     @Override
-    public void checkCanExecuteQuery(Identity identity, QueryId queryId)
-    {
-        delegate().checkCanExecuteQuery(identity, queryId);
-    }
-
-    @Override
     public void checkCanViewQueryOwnedBy(Identity identity, Identity queryOwner)
     {
         delegate().checkCanViewQueryOwnedBy(identity, queryOwner);
@@ -116,12 +109,6 @@ public abstract class ForwardingSystemAccessControl
     public void checkCanSetSystemSessionProperty(Identity identity, String propertyName)
     {
         delegate().checkCanSetSystemSessionProperty(identity, propertyName);
-    }
-
-    @Override
-    public void checkCanSetSystemSessionProperty(Identity identity, QueryId queryId, String propertyName)
-    {
-        delegate().checkCanSetSystemSessionProperty(identity, queryId, propertyName);
     }
 
     @Override

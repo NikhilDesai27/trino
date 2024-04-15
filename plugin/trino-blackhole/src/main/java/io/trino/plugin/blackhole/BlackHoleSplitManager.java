@@ -35,7 +35,7 @@ public final class BlackHoleSplitManager
             DynamicFilter dynamicFilter,
             Constraint constraint)
     {
-        int splitCount = ((BlackHoleTableHandle) table).splitCount();
+        int splitCount = ((BlackHoleTableHandle) table).getSplitCount();
         return new FixedSplitSource(nCopies(splitCount, BlackHoleSplit.INSTANCE));
     }
 }

@@ -77,9 +77,9 @@ public class RedisSplitManager
         long numberOfKeys = 1;
         // when Redis keys are provides in a zset, create multiple
         // splits by splitting zset in chunks
-        if (redisTableHandle.keyDataFormat().equals("zset")) {
+        if (redisTableHandle.getKeyDataFormat().equals("zset")) {
             try (Jedis jedis = jedisManager.getJedisPool(nodes.get(0)).getResource()) {
-                numberOfKeys = jedis.zcount(redisTableHandle.keyName(), "-inf", "+inf");
+                numberOfKeys = jedis.zcount(redisTableHandle.getKeyName(), "-inf", "+inf");
             }
         }
 
@@ -96,12 +96,12 @@ public class RedisSplitManager
             }
 
             RedisSplit split = new RedisSplit(
-                    redisTableHandle.schemaName(),
-                    redisTableHandle.tableName(),
-                    redisTableHandle.keyDataFormat(),
-                    redisTableHandle.valueDataFormat(),
-                    redisTableHandle.keyName(),
-                    redisTableHandle.constraint(),
+                    redisTableHandle.getSchemaName(),
+                    redisTableHandle.getTableName(),
+                    redisTableHandle.getKeyDataFormat(),
+                    redisTableHandle.getValueDataFormat(),
+                    redisTableHandle.getKeyName(),
+                    redisTableHandle.getConstraint(),
                     startIndex,
                     endIndex,
                     nodes);

@@ -413,8 +413,8 @@ public class TestPrunePattenRecognitionColumns
                                         new Comparison(GREATER_THAN, new Reference(INTEGER, "value"), new Constant(INTEGER, 0L)),
                                         ImmutableMap.of(new Symbol(INTEGER, "value"), new ScalarValuePointer(
                                                 new LogicalIndexPointer(ImmutableSet.of(), true, true, 0, 0),
-                                                new Symbol(BIGINT, "a"))))
-                                .source(p.values(p.symbol("a", BIGINT))))))
+                                                new Symbol(UNKNOWN, "a"))))
+                                .source(p.values(p.symbol("a"))))))
                 .doesNotFire();
     }
 

@@ -594,13 +594,12 @@ public class TimeSharingTaskExecutor
                         // ignore random errors due to driver thread interruption
                         if (!split.isDestroyed()) {
                             if (t instanceof TrinoException trinoException) {
-                                log.debug(t, "Error processing %s: %s: %s", split.getInfo(), trinoException.getErrorCode().getName(), trinoException.getMessage());
+                                log.error(t, "Error processing %s: %s: %s", split.getInfo(), trinoException.getErrorCode().getName(), trinoException.getMessage());
                             }
                             else {
-                                log.debug(t, "Error processing %s", split.getInfo());
+                                log.error(t, "Error processing %s", split.getInfo());
                             }
                         }
-                        split.markFailed(t);
                         splitFinished(split);
                     }
                     finally {

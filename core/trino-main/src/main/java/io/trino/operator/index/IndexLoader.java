@@ -82,6 +82,7 @@ public class IndexLoader
     @GuardedBy("this")
     private PipelineContext pipelineContext; // Lazily initialized
 
+    @GuardedBy("this")
     private final AtomicReference<IndexSnapshot> indexSnapshotReference;
 
     public IndexLoader(
@@ -228,8 +229,7 @@ public class IndexLoader
         return myUpdateRequest.getFinishedIndexSnapshot();
     }
 
-    @GuardedBy("this")
-    private IndexedData streamIndexDataForSingleKey(UpdateRequest updateRequest)
+    public IndexedData streamIndexDataForSingleKey(UpdateRequest updateRequest)
     {
         Page indexKeyTuple = updateRequest.getPage().getRegion(0, 1);
 

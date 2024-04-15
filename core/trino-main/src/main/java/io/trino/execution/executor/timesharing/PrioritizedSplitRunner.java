@@ -217,11 +217,6 @@ public final class PrioritizedSplitRunner
         }
     }
 
-    public void markFailed(Throwable cause)
-    {
-        finishedFuture.setException(cause);
-    }
-
     public void setReady()
     {
         lastReady.set(ticker.read());

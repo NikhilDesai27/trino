@@ -39,8 +39,6 @@ public interface DeltaLakeMetastore
 
     void createTable(Table table, PrincipalPrivileges principalPrivileges);
 
-    void replaceTable(Table table, PrincipalPrivileges principalPrivileges);
-
     void dropTable(SchemaTableName schemaTableName, String tableLocation, boolean deleteData);
 
     void renameTable(SchemaTableName from, SchemaTableName to);

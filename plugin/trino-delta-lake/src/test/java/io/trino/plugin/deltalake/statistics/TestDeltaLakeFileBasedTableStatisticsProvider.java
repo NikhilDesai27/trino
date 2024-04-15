@@ -106,7 +106,7 @@ public class TestDeltaLakeFileBasedTableStatisticsProvider
         SchemaTableName schemaTableName = new SchemaTableName("db_name", tableName);
         TableSnapshot tableSnapshot;
         try {
-            tableSnapshot = transactionLogAccess.loadSnapshot(SESSION, schemaTableName, tableLocation, Optional.empty());
+            tableSnapshot = transactionLogAccess.loadSnapshot(SESSION, schemaTableName, tableLocation);
         }
         catch (IOException e) {
             throw new RuntimeException(e);
@@ -126,8 +126,7 @@ public class TestDeltaLakeFileBasedTableStatisticsProvider
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
-                0,
-                false);
+                0);
     }
 
     @Test
@@ -258,8 +257,7 @@ public class TestDeltaLakeFileBasedTableStatisticsProvider
                 tableHandle.getUpdatedColumns(),
                 tableHandle.getUpdateRowIdColumns(),
                 tableHandle.getAnalyzeHandle(),
-                0,
-                tableHandle.isTimeTravel());
+                0);
         stats = getTableStatistics(SESSION, tableHandleWithUnenforcedConstraint);
         columnStatistics = stats.getColumnStatistics().get(COLUMN_HANDLE);
         assertThat(columnStatistics.getRange().get().getMin()).isEqualTo(0.0);
@@ -284,8 +282,7 @@ public class TestDeltaLakeFileBasedTableStatisticsProvider
                 tableHandle.getUpdatedColumns(),
                 tableHandle.getUpdateRowIdColumns(),
                 tableHandle.getAnalyzeHandle(),
-                0,
-                tableHandle.isTimeTravel());
+                0);
         DeltaLakeTableHandle tableHandleWithNoneUnenforcedConstraint = new DeltaLakeTableHandle(
                 tableHandle.getSchemaName(),
                 tableHandle.getTableName(),
@@ -300,8 +297,7 @@ public class TestDeltaLakeFileBasedTableStatisticsProvider
                 tableHandle.getUpdatedColumns(),
                 tableHandle.getUpdateRowIdColumns(),
                 tableHandle.getAnalyzeHandle(),
-                0,
-                tableHandle.isTimeTravel());
+                0);
         // If either the table handle's constraint or the provided Constraint are none, it will cause a 0 record count to be reported
         assertEmptyStats(getTableStatistics(SESSION, tableHandleWithNoneEnforcedConstraint));
         assertEmptyStats(getTableStatistics(SESSION, tableHandleWithNoneUnenforcedConstraint));
@@ -462,7 +458,7 @@ public class TestDeltaLakeFileBasedTableStatisticsProvider
     {
         TableSnapshot tableSnapshot;
         try {
-            tableSnapshot = transactionLogAccess.loadSnapshot(session, tableHandle.getSchemaTableName(), tableHandle.getLocation(), Optional.empty());
+            tableSnapshot = transactionLogAccess.loadSnapshot(session, tableHandle.getSchemaTableName(), tableHandle.getLocation());
         }
         catch (IOException e) {
             throw new RuntimeException(e);

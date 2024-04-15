@@ -13,19 +13,48 @@
  */
 package io.trino.plugin.memory;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.trino.spi.connector.ConnectorOutputTableHandle;
 
 import java.util.Set;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-public record MemoryOutputTableHandle(
-        long table,
-        Set<Long> activeTableIds)
+public final class MemoryOutputTableHandle
         implements ConnectorOutputTableHandle
 {
-    public MemoryOutputTableHandle
+    private final long table;
+    private final Set<Long> activeTableIds;
+
+    @JsonCreator
+    public MemoryOutputTableHandle(
+            @JsonProperty("table") long table,
+            @JsonProperty("activeTableIds") Set<Long> activeTableIds)
     {
-        requireNonNull(activeTableIds, "activeTableIds is null");
+        this.table = table;
+        this.activeTableIds = requireNonNull(activeTableIds, "activeTableIds is null");
+    }
+
+    @JsonProperty
+    public long getTable()
+    {
+        return table;
+    }
+
+    @JsonProperty
+    public Set<Long> getActiveTableIds()
+    {
+        return activeTableIds;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("table", table)
+                .add("activeTableIds", activeTableIds)
+                .toString();
     }
 }

@@ -13,22 +13,62 @@
  */
 package io.trino.plugin.jdbc;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.trino.spi.connector.ConnectorTransactionHandle;
 
+import java.util.Objects;
 import java.util.UUID;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-public record JdbcTransactionHandle(UUID uuid)
+public class JdbcTransactionHandle
         implements ConnectorTransactionHandle
 {
+    private final UUID uuid;
+
     public JdbcTransactionHandle()
     {
         this(UUID.randomUUID());
     }
 
-    public JdbcTransactionHandle
+    @JsonCreator
+    public JdbcTransactionHandle(@JsonProperty("uuid") UUID uuid)
     {
-        requireNonNull(uuid, "uuid is null");
+        this.uuid = requireNonNull(uuid, "uuid is null");
+    }
+
+    @JsonProperty
+    public UUID getUuid()
+    {
+        return uuid;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) {
+            return true;
+        }
+        if ((obj == null) || (getClass() != obj.getClass())) {
+            return false;
+        }
+        JdbcTransactionHandle other = (JdbcTransactionHandle) obj;
+        return Objects.equals(uuid, other.uuid);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(uuid);
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("uuid", uuid)
+                .toString();
     }
 }

@@ -140,79 +140,6 @@ public class TestDeltaLakeColumnMappingMode
     }
 
     @Test(groups = {DELTA_LAKE_OSS, PROFILE_SPECIFIC_TESTS}, dataProvider = "columnMappingDataProvider")
-    public void testChangingColumnMappingModeViaCreateOrReplaceTableOnTrino(String mode)
-    {
-        String tableName = "test_cortas_column_mapping_" + randomNameSuffix();
-        onTrino().executeQuery("" +
-                "CREATE TABLE delta.default." + tableName +
-                "(x INT) " +
-                "WITH (" +
-                " location = 's3://" + bucketName + "/databricks-compatibility-test-" + tableName + "'" +
-                ")");
-
-        assertTableReaderAndWriterVersion("default", tableName, "1", "2");
-
-        // Replace table with a different column mode
-        onTrino().executeQuery("" +
-                "CREATE OR REPLACE TABLE delta.default." + tableName +
-                "(x INT) " +
-                "WITH (" +
-                " location = 's3://" + bucketName + "/databricks-compatibility-test-" + tableName + "'," +
-                " column_mapping_mode = '" + mode + "'" +
-                ")");
-
-        assertTableReaderAndWriterVersion("default", tableName, "2", "5");
-
-        // Revert back to `none` column mode
-        onTrino().executeQuery("" +
-                "CREATE OR REPLACE TABLE delta.default." + tableName +
-                "(x INT) " +
-                "WITH (" +
-                " location = 's3://" + bucketName + "/databricks-compatibility-test-" + tableName + "'," +
-                " column_mapping_mode = 'none'" +
-                ")");
-
-        assertTableReaderAndWriterVersion("default", tableName, "2", "5");
-
-        onTrino().executeQuery("DROP TABLE delta.default." + tableName);
-    }
-
-    @Test(groups = {DELTA_LAKE_OSS, PROFILE_SPECIFIC_TESTS}, dataProvider = "columnMappingDataProvider")
-    public void testChangingColumnMappingModeViaCreateOrReplaceTableOnDelta(String mode)
-    {
-        String tableName = "test_cortas_column_mapping_" + randomNameSuffix();
-        onDelta().executeQuery("" +
-                "CREATE TABLE default." + tableName +
-                "(x INT) " +
-                "USING delta " +
-                "LOCATION 's3://" + bucketName + "/databricks-compatibility-test-" + tableName + "'");
-
-        assertTableReaderAndWriterVersion("default", tableName, "1", "2");
-
-        // Replace table with a different column mode
-        onDelta().executeQuery("" +
-                "CREATE OR REPLACE TABLE default." + tableName +
-                "(x INT) " +
-                "USING delta " +
-                "LOCATION 's3://" + bucketName + "/databricks-compatibility-test-" + tableName + "'" +
-                "TBLPROPERTIES ('delta.columnMapping.mode'='" + mode + "')");
-
-        assertTableReaderAndWriterVersion("default", tableName, "2", "5");
-
-        // Revert back to `none` column mode
-        onDelta().executeQuery("" +
-                "CREATE OR REPLACE TABLE default." + tableName +
-                "(x INT) " +
-                "USING delta " +
-                "LOCATION 's3://" + bucketName + "/databricks-compatibility-test-" + tableName + "'" +
-                "TBLPROPERTIES ('delta.columnMapping.mode'='none')");
-
-        assertTableReaderAndWriterVersion("default", tableName, "2", "5");
-
-        onTrino().executeQuery("DROP TABLE delta.default." + tableName);
-    }
-
-    @Test(groups = {DELTA_LAKE_OSS, PROFILE_SPECIFIC_TESTS}, dataProvider = "columnMappingDataProvider")
     public void testDeltaColumnMappingModeReaderAndWriterVersion(String mode)
     {
         testColumnMappingModeReaderAndWriterVersion(tableName -> onDelta().executeQuery("" +
@@ -229,7 +156,10 @@ public class TestDeltaLakeColumnMappingMode
 
         createTable.accept(tableName);
 
-        assertTableReaderAndWriterVersion("default", tableName, "2", "5");
+        assertThat(getTablePropertyOnDelta("default", tableName, "delta.minReaderVersion"))
+                .isEqualTo("2");
+        assertThat(getTablePropertyOnDelta("default", tableName, "delta.minWriterVersion"))
+                .isEqualTo("5");
 
         onTrino().executeQuery("DROP TABLE delta.default." + tableName);
     }
@@ -1207,14 +1137,6 @@ public class TestDeltaLakeColumnMappingMode
         finally {
             dropDeltaTableWithRetry(tableName);
         }
-    }
-
-    private void assertTableReaderAndWriterVersion(String schemaName, String tableName, String minReaderVersion, String minWriterVersion)
-    {
-        assertThat(getTablePropertyOnDelta(schemaName, tableName, "delta.minReaderVersion"))
-                .isEqualTo(minReaderVersion);
-        assertThat(getTablePropertyOnDelta(schemaName, tableName, "delta.minWriterVersion"))
-                .isEqualTo(minWriterVersion);
     }
 
     @DataProvider

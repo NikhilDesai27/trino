@@ -468,7 +468,7 @@ public class LogicalPlanner
         forEachPair(tableMetadata.getColumns().stream(), visibleFieldMappings.stream(), (column, fieldMapping) -> {
             assignmentsBuilder.put(
                     symbolAllocator.newSymbol(column.getName(), column.getType()),
-                    coerceOrCastToTableType(fieldMapping, column.getType(), fieldMapping.type()));
+                    coerceOrCastToTableType(fieldMapping, column.getType(), fieldMapping.getType()));
             finalColumnsBuilder.add(column);
         });
 
@@ -538,7 +538,7 @@ public class LogicalPlanner
             }
             else {
                 Symbol input = visibleFieldMappings.get(index);
-                Type queryType = input.type();
+                Type queryType = input.getType();
 
                 expression = coerceOrCastToTableType(input, tableType, queryType);
             }

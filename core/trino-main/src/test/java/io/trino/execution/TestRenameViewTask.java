@@ -14,7 +14,6 @@
 package io.trino.execution;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.trino.execution.warnings.WarningCollector;
 import io.trino.metadata.QualifiedObjectName;
@@ -40,7 +39,7 @@ public class TestRenameViewTask
     {
         QualifiedObjectName viewName = qualifiedObjectName("existing_view");
         QualifiedObjectName newViewName = qualifiedObjectName("existing_view_new");
-        metadata.createView(testSession, viewName, someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, viewName, someView(), false);
 
         getFutureValue(executeRenameView(asQualifiedName(viewName), asQualifiedName(newViewName)));
         assertThat(metadata.isView(testSession, viewName)).isFalse();
@@ -83,7 +82,7 @@ public class TestRenameViewTask
     public void testRenameViewTargetTableExists()
     {
         QualifiedName viewName = qualifiedName("existing_view");
-        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), false);
         QualifiedObjectName tableName = qualifiedObjectName("existing_table");
         metadata.createTable(testSession, TEST_CATALOG_NAME, someTable(tableName), FAIL);
 
@@ -96,7 +95,7 @@ public class TestRenameViewTask
     public void testRenameViewTargetMaterializedViewExists()
     {
         QualifiedName viewName = qualifiedName("existing_view");
-        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), false);
         QualifiedObjectName materializedViewName = qualifiedObjectName("existing_materialized_view");
         metadata.createMaterializedView(testSession, materializedViewName, someMaterializedView(), MATERIALIZED_VIEW_PROPERTIES, false, false);
 
@@ -109,7 +108,7 @@ public class TestRenameViewTask
     public void testRenameViewTargetViewExists()
     {
         QualifiedName viewName = qualifiedName("existing_view");
-        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, QualifiedObjectName.valueOf(viewName.toString()), someView(), false);
 
         assertTrinoExceptionThrownBy(() -> getFutureValue(executeRenameView(viewName, viewName)))
                 .hasErrorCode(GENERIC_USER_ERROR)

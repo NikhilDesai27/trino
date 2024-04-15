@@ -75,7 +75,7 @@ import static io.trino.sql.planner.plan.Patterns.correlatedJoin;
  * in subquery are supported.
  * <p>
  * Transforms:
- * <pre>{@code
+ * <pre>
  * - CorrelatedJoin (LEFT or INNER) on true, correlation(c1, c2)
  *      - Input (a, c1, c2)
  *      - Aggregation
@@ -90,9 +90,9 @@ import static io.trino.sql.planner.plan.Patterns.correlatedJoin;
  *                          g <- unnest(c1)
  *                          u <- unnest(c2)
  *                          replicate: ()
- * }</pre>
+ * </pre>
  * Into:
- * <pre>{@code
+ * <pre>
  * - Projection (restrict outputs)
  *      - Aggregation
  *           group by (a, c1, c2, unique)
@@ -110,7 +110,7 @@ import static io.trino.sql.planner.plan.Patterns.correlatedJoin;
  *                               replicate: (a, c1, c2, unique)
  *                               - AssignUniqueId unique
  *                                    - Input (a, c1, c2)
- * }</pre>
+ * </pre>
  */
 public class DecorrelateInnerUnnestWithGlobalAggregation
         implements Rule<CorrelatedJoinNode>

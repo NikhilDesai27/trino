@@ -24,7 +24,6 @@ import io.trino.plugin.jdbc.JdbcQueryEventListener;
 import io.trino.plugin.jdbc.JdbcTableHandle;
 import io.trino.plugin.jdbc.JdbcTypeHandle;
 import io.trino.plugin.jdbc.RemoteTableName;
-import io.trino.plugin.jdbc.TimestampTimeZoneDomain;
 import io.trino.spi.TrinoException;
 import io.trino.spi.connector.AggregateFunction;
 import io.trino.spi.connector.AggregationApplicationResult;
@@ -83,15 +82,10 @@ public class PhoenixMetadata
     private final PhoenixClient phoenixClient;
     private final IdentifierMapping identifierMapping;
 
-    // TODO (https://github.com/trinodb/trino/issues/21251) PhoenixMetadata must not be a singleton
     @Inject
-    public PhoenixMetadata(
-            PhoenixClient phoenixClient,
-            TimestampTimeZoneDomain timestampTimeZoneDomain,
-            IdentifierMapping identifierMapping,
-            Set<JdbcQueryEventListener> jdbcQueryEventListeners)
+    public PhoenixMetadata(PhoenixClient phoenixClient, IdentifierMapping identifierMapping, Set<JdbcQueryEventListener> jdbcQueryEventListeners)
     {
-        super(phoenixClient, timestampTimeZoneDomain, false, jdbcQueryEventListeners);
+        super(phoenixClient, false, jdbcQueryEventListeners);
         this.phoenixClient = requireNonNull(phoenixClient, "phoenixClient is null");
         this.identifierMapping = requireNonNull(identifierMapping, "identifierMapping is null");
     }
@@ -117,8 +111,8 @@ public class PhoenixMetadata
                 .map(properties -> properties
                         .stream()
                         .map(item -> (LocalProperty<ColumnHandle>) new SortingProperty<ColumnHandle>(
-                                item.column(),
-                                item.sortOrder()))
+                                item.getColumn(),
+                                item.getSortOrder()))
                         .collect(toImmutableList()))
                 .orElse(ImmutableList.of());
 

@@ -234,11 +234,11 @@ public class TestLogicalPlanner
                 anyTree(
                         tableScan(
                                 tableHandle -> {
-                                    Map<ColumnHandle, Domain> domains = ((TpchTableHandle) tableHandle).constraint().getDomains()
+                                    Map<ColumnHandle, Domain> domains = ((TpchTableHandle) tableHandle).getConstraint().getDomains()
                                             .orElseThrow(() -> new AssertionError("Unexpected none TupleDomain"));
 
                                     Domain domain = domains.entrySet().stream()
-                                            .filter(entry -> ((TpchColumnHandle) entry.getKey()).columnName().equals("type"))
+                                            .filter(entry -> ((TpchColumnHandle) entry.getKey()).getColumnName().equals("type"))
                                             .map(Entry::getValue)
                                             .collect(toOptional())
                                             .orElseThrow(() -> new AssertionError("No domain for 'type'"));
@@ -251,7 +251,7 @@ public class TestLogicalPlanner
                                     return true;
                                 },
                                 TupleDomain.withColumnDomains(ImmutableMap.of(
-                                        tableHandle -> ((TpchColumnHandle) tableHandle).columnName().equals("type"),
+                                        tableHandle -> ((TpchColumnHandle) tableHandle).getColumnName().equals("type"),
                                         Domain.create(
                                                 ValueSet.ofRanges(Range.range(createVarcharType(25), utf8Slice("LARGE PLATED "), true, utf8Slice("LARGE PLATED!"), false)),
                                                 false))),
@@ -1335,7 +1335,7 @@ public class TestLogicalPlanner
 
         Consumer<Plan> validateSingleStreamingAggregation = plan -> assertThat(countOfMatchingNodes(
                 plan,
-                node -> node instanceof AggregationNode && ((AggregationNode) node).getGroupingKeys().contains(new Symbol(BIGINT, "unique"))
+                node -> node instanceof AggregationNode && ((AggregationNode) node).getGroupingKeys().contains(new Symbol(UNKNOWN, "unique"))
                         && ((AggregationNode) node).isStreamable())).isEqualTo(1);
 
         // region is unpartitioned, AssignUniqueId should provide satisfying partitioning for count(*) after LEFT JOIN

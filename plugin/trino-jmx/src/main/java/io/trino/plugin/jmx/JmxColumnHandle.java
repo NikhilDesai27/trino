@@ -13,25 +13,73 @@
  */
 package io.trino.plugin.jmx;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ColumnMetadata;
 import io.trino.spi.type.Type;
 
+import java.util.Objects;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-public record JmxColumnHandle(
-        String columnName,
-        Type columnType)
+public class JmxColumnHandle
         implements ColumnHandle
 {
-    public JmxColumnHandle
+    private final String columnName;
+    private final Type columnType;
+
+    @JsonCreator
+    public JmxColumnHandle(
+            @JsonProperty("columnName") String columnName,
+            @JsonProperty("columnType") Type columnType)
     {
-        requireNonNull(columnName, "columnName is null");
-        requireNonNull(columnType, "columnType is null");
+        this.columnName = requireNonNull(columnName, "columnName is null");
+        this.columnType = requireNonNull(columnType, "columnType is null");
     }
 
-    @JsonIgnore
+    @JsonProperty
+    public String getColumnName()
+    {
+        return columnName;
+    }
+
+    @JsonProperty
+    public Type getColumnType()
+    {
+        return columnType;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(columnName, columnType);
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        JmxColumnHandle other = (JmxColumnHandle) obj;
+        return Objects.equals(this.columnName, other.columnName) &&
+                Objects.equals(this.columnType, other.columnType);
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("columnName", columnName)
+                .add("columnType", columnType)
+                .toString();
+    }
+
     public ColumnMetadata getColumnMetadata()
     {
         return new ColumnMetadata(columnName, columnType);

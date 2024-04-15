@@ -114,7 +114,7 @@ public class PushProjectionIntoTableScan
         List<ConnectorExpression> connectorPartialProjections = ImmutableList.copyOf(partialTranslations.values());
 
         Map<String, Symbol> inputVariableMappings = tableScan.getAssignments().keySet().stream()
-                .collect(toImmutableMap(Symbol::name, identity()));
+                .collect(toImmutableMap(Symbol::getName, identity()));
         Map<String, ColumnHandle> assignments = inputVariableMappings.entrySet().stream()
                 .collect(toImmutableMap(Entry::getKey, entry -> tableScan.getAssignments().get(entry.getValue())));
 

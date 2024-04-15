@@ -126,7 +126,7 @@ public class Query
                 throw new TableNotFoundException(schemaTableName);
             }
 
-            RemoteTableName remoteTableName = tableHandle.remoteTableName();
+            RemoteTableName remoteTableName = tableHandle.getRemoteTableName();
             // Don't store Document object to MongoTableHandle for avoiding serialization issue
             parseFilter(filter);
 

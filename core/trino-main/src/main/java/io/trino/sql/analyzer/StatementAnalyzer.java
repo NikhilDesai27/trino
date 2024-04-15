@@ -302,6 +302,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static io.trino.SystemSessionProperties.getMaxGroupingSets;
+import static io.trino.SystemSessionProperties.isLegacyMaterializedViewGracePeriod;
 import static io.trino.metadata.FunctionResolver.toPath;
 import static io.trino.metadata.GlobalFunctionCatalog.isBuiltinFunctionName;
 import static io.trino.metadata.MetadataUtil.createQualifiedObjectName;
@@ -500,7 +501,7 @@ class StatementAnalyzer
                 .process(node, Optional.empty());
     }
 
-    private Scope analyzeForUpdate(Relation relation, Optional<Scope> outerQueryScope, UpdateKind updateKind)
+    public Scope analyzeForUpdate(Relation relation, Optional<Scope> outerQueryScope, UpdateKind updateKind)
     {
         return new Visitor(outerQueryScope, warningCollector, Optional.of(updateKind), true)
                 .process(relation, Optional.empty());
@@ -1670,7 +1671,7 @@ class StatementAnalyzer
 
             Node errorLocation = node;
             if (!node.getArguments().isEmpty()) {
-                errorLocation = node.getArguments().getFirst();
+                errorLocation = node.getArguments().get(0);
             }
 
             ArgumentsAnalysis argumentsAnalysis = analyzeArguments(function.getArguments(), node.getArguments(), scope, errorLocation);
@@ -2337,6 +2338,13 @@ class StatementAnalyzer
             MaterializedViewFreshness materializedViewFreshness = metadata.getMaterializedViewFreshness(session, name);
             MaterializedViewFreshness.Freshness freshness = materializedViewFreshness.getFreshness();
 
+            if (isLegacyMaterializedViewGracePeriod(session)) {
+                return switch (freshness) {
+                    case FRESH, UNKNOWN -> true;
+                    case STALE -> false;
+                };
+            }
+
             if (freshness == FRESH) {
                 return true;
             }
@@ -2852,7 +2860,7 @@ class StatementAnalyzer
         {
             List<Expression> nestedWindowExpressions = extractWindowExpressions(ImmutableList.of(expression));
             if (!nestedWindowExpressions.isEmpty()) {
-                throw semanticException(NESTED_WINDOW, nestedWindowExpressions.getFirst(), "Cannot nest window functions or row pattern measures inside pattern recognition expressions");
+                throw semanticException(NESTED_WINDOW, nestedWindowExpressions.get(0), "Cannot nest window functions or row pattern measures inside pattern recognition expressions");
             }
 
             return ExpressionAnalyzer.analyzePatternRecognitionExpression(
@@ -3224,7 +3232,7 @@ class StatementAnalyzer
             }
 
             Field[] outputDescriptorFields = new Field[outputFieldTypes.length];
-            RelationType firstDescriptor = childrenTypes.getFirst();
+            RelationType firstDescriptor = childrenTypes.get(0);
             for (int i = 0; i < outputFieldTypes.length; i++) {
                 Field oldField = firstDescriptor.getFieldByIndex(i);
                 outputDescriptorFields[i] = new Field(
@@ -3572,7 +3580,7 @@ class StatementAnalyzer
                 checkArgument(columnCount == setExpressions.size(), "Number of merge columns (%s) isn't equal to number of expressions (%s)", columnCount, setExpressions.size());
                 Set<String> columnNameSet = new HashSet<>(columnCount);
                 caseColumnNames.forEach(mergeColumn -> {
-                    if (!dataColumnTypes.containsKey(mergeColumn)) {
+                    if (!dataColumnTypes.keySet().contains(mergeColumn)) {
                         throw semanticException(COLUMN_NOT_FOUND, merge, "Merge column name does not exist in target table: %s", mergeColumn);
                     }
                     if (!columnNameSet.add(mergeColumn)) {
@@ -3850,7 +3858,7 @@ class StatementAnalyzer
         @Override
         protected Scope visitValues(Values node, Optional<Scope> scope)
         {
-            checkState(!node.getRows().isEmpty());
+            checkState(node.getRows().size() >= 1);
 
             List<Type> rowTypes = node.getRows().stream()
                     .map(row -> analyzeExpression(row, createScope(scope)).getType(row))
@@ -3862,8 +3870,8 @@ class StatementAnalyzer
                     })
                     .collect(toImmutableList());
 
-            int fieldCount = rowTypes.getFirst().getTypeParameters().size();
-            Type commonSuperType = rowTypes.getFirst();
+            int fieldCount = rowTypes.get(0).getTypeParameters().size();
+            Type commonSuperType = rowTypes.get(0);
             for (Type rowType : rowTypes) {
                 // check field count consistency for rows
                 if (rowType.getTypeParameters().size() != fieldCount) {
@@ -3878,7 +3886,6 @@ class StatementAnalyzer
                 commonSuperType = typeCoercion.getCommonSuperType(rowType, commonSuperType)
                         .orElseThrow(() -> semanticException(TYPE_MISMATCH,
                                 node,
-                                // TODO should the message quote first type and current, or commonSuperType and current?
                                 "Values rows have mismatched types: %s vs %s",
                                 rowTypes.get(0),
                                 rowType));
@@ -4160,13 +4167,15 @@ class StatementAnalyzer
                     .map(NestedColumns.class::cast)
                     .collect(toImmutableList());
 
-            nestedColumns.forEach(definition -> {
-                if (definition.getPathName().isEmpty()) {
-                    throw semanticException(MISSING_PATH_NAME, definition.getJsonPath(), "All nested JSON paths must be named when default plan is given");
-                }
-            });
+            nestedColumns.stream()
+                    .forEach(definition -> {
+                        if (definition.getPathName().isEmpty()) {
+                            throw semanticException(MISSING_PATH_NAME, definition.getJsonPath(), "All nested JSON paths must be named when default plan is given");
+                        }
+                    });
 
-            nestedColumns.forEach(definition -> checkAllNestedPathsNamed(definition.getColumns()));
+            nestedColumns.stream()
+                    .forEach(definition -> checkAllNestedPathsNamed(definition.getColumns()));
         }
 
         private void analyzeWindowDefinitions(QuerySpecification node, Scope scope)
@@ -4218,7 +4227,7 @@ class StatementAnalyzer
 
                 // analyze dependencies between this window specification and referenced window specification
                 if (!windowSpecification.getPartitionBy().isEmpty()) {
-                    throw semanticException(INVALID_PARTITION_BY, windowSpecification.getPartitionBy().getFirst(), "WINDOW specification with named WINDOW reference cannot specify PARTITION BY");
+                    throw semanticException(INVALID_PARTITION_BY, windowSpecification.getPartitionBy().get(0), "WINDOW specification with named WINDOW reference cannot specify PARTITION BY");
                 }
                 if (windowSpecification.getOrderBy().isPresent() && referencedWindow.getOrderBy().isPresent()) {
                     throw semanticException(INVALID_ORDER_BY, windowSpecification.getOrderBy().get(), "Cannot specify ORDER BY if referenced named WINDOW specifies ORDER BY");
@@ -4330,7 +4339,7 @@ class StatementAnalyzer
 
                 List<Expression> nestedWindowExpressions = extractWindowExpressions(windowFunction.getArguments());
                 if (!nestedWindowExpressions.isEmpty()) {
-                    throw semanticException(NESTED_WINDOW, nestedWindowExpressions.getFirst(), "Cannot nest window functions or row pattern measures inside window function arguments");
+                    throw semanticException(NESTED_WINDOW, nestedWindowExpressions.get(0), "Cannot nest window functions or row pattern measures inside window function arguments");
                 }
 
                 if (windowFunction.isDistinct()) {
@@ -4372,7 +4381,7 @@ class StatementAnalyzer
 
                 List<Expression> windowExpressions = extractWindowExpressions(ImmutableList.of(predicate), session, functionResolver, accessControl);
                 if (!windowExpressions.isEmpty()) {
-                    throw semanticException(NESTED_WINDOW, windowExpressions.getFirst(), "HAVING clause cannot contain window functions or row pattern measures");
+                    throw semanticException(NESTED_WINDOW, windowExpressions.get(0), "HAVING clause cannot contain window functions or row pattern measures");
                 }
 
                 ExpressionAnalysis expressionAnalysis = analyzeExpression(predicate, scope);
@@ -5295,7 +5304,7 @@ class StatementAnalyzer
                     if (!isRecursive) {
                         List<Node> recursiveReferences = findReferences(withQuery.getQuery(), withQuery.getName());
                         if (!recursiveReferences.isEmpty()) {
-                            throw semanticException(INVALID_RECURSIVE_REFERENCE, recursiveReferences.getFirst(), "recursive reference not allowed in this context");
+                            throw semanticException(INVALID_RECURSIVE_REFERENCE, recursiveReferences.get(0), "recursive reference not allowed in this context");
                         }
                     }
                 }
@@ -5341,7 +5350,7 @@ class StatementAnalyzer
             Relation step = union.getRelations().get(1);
             List<Node> anchorReferences = findReferences(anchor, withQuery.getName());
             if (!anchorReferences.isEmpty()) {
-                throw semanticException(INVALID_RECURSIVE_REFERENCE, anchorReferences.getFirst(), "WITH table name is referenced in the base relation of recursion");
+                throw semanticException(INVALID_RECURSIVE_REFERENCE, anchorReferences.get(0), "WITH table name is referenced in the base relation of recursion");
             }
             // a WITH query is linearly recursive if it has a single recursive reference
             List<Node> stepReferences = findReferences(step, withQuery.getName());
@@ -5361,12 +5370,12 @@ class StatementAnalyzer
                 specification = query.getQueryBody();
             }
             if (!(specification instanceof QuerySpecification) || ((QuerySpecification) specification).getFrom().isEmpty()) {
-                throw semanticException(INVALID_RECURSIVE_REFERENCE, stepReferences.getFirst(), "recursive reference outside of FROM clause of the step relation of recursion");
+                throw semanticException(INVALID_RECURSIVE_REFERENCE, stepReferences.get(0), "recursive reference outside of FROM clause of the step relation of recursion");
             }
             Relation from = ((QuerySpecification) specification).getFrom().get();
             List<Node> fromReferences = findReferences(from, withQuery.getName());
             if (fromReferences.isEmpty()) {
-                throw semanticException(INVALID_RECURSIVE_REFERENCE, stepReferences.getFirst(), "recursive reference outside of FROM clause of the step relation of recursion");
+                throw semanticException(INVALID_RECURSIVE_REFERENCE, stepReferences.get(0), "recursive reference outside of FROM clause of the step relation of recursion");
             }
 
             // b) validate top-level shape of recursive query
@@ -5393,7 +5402,7 @@ class StatementAnalyzer
             // set aliases in anchor scope as defined for WITH query. Recursion step will refer to anchor fields by aliases.
             Scope aliasedAnchorScope = setAliases(anchorScope, withQuery.getName(), withQuery.getColumnNames().get());
             // record expandable query base scope for recursion step analysis
-            Node recursiveReference = fromReferences.getFirst();
+            Node recursiveReference = fromReferences.get(0);
             analysis.setExpandableBaseScope(recursiveReference, aliasedAnchorScope);
             // process expandable query -- recursion step
             Scope stepScope = process(step, parentScope);
@@ -5491,10 +5500,10 @@ class StatementAnalyzer
                             List<Node> leftRecursiveReferences = findReferences(join.getLeft(), name);
                             List<Node> rightRecursiveReferences = findReferences(join.getRight(), name);
                             if (!leftRecursiveReferences.isEmpty() && (type == RIGHT || type == FULL)) {
-                                throw semanticException(INVALID_RECURSIVE_REFERENCE, leftRecursiveReferences.getFirst(), "recursive reference in left source of %s join", type);
+                                throw semanticException(INVALID_RECURSIVE_REFERENCE, leftRecursiveReferences.get(0), "recursive reference in left source of %s join", type);
                             }
                             if (!rightRecursiveReferences.isEmpty() && (type == LEFT || type == FULL)) {
-                                throw semanticException(INVALID_RECURSIVE_REFERENCE, rightRecursiveReferences.getFirst(), "recursive reference in right source of %s join", type);
+                                throw semanticException(INVALID_RECURSIVE_REFERENCE, rightRecursiveReferences.get(0), "recursive reference in right source of %s join", type);
                             }
                         }
                     });
@@ -5519,14 +5528,14 @@ class StatementAnalyzer
                         if (!rightRecursiveReferences.isEmpty()) {
                             throw semanticException(
                                     INVALID_RECURSIVE_REFERENCE,
-                                    rightRecursiveReferences.getFirst(),
+                                    rightRecursiveReferences.get(0),
                                     "recursive reference in right relation of EXCEPT %s",
                                     except.isDistinct() ? "DISTINCT" : "ALL");
                         }
                         if (!except.isDistinct()) {
                             List<Node> leftRecursiveReferences = findReferences(except.getLeft(), name);
                             if (!leftRecursiveReferences.isEmpty()) {
-                                throw semanticException(INVALID_RECURSIVE_REFERENCE, leftRecursiveReferences.getFirst(), "recursive reference in left relation of EXCEPT ALL");
+                                throw semanticException(INVALID_RECURSIVE_REFERENCE, leftRecursiveReferences.get(0), "recursive reference in left relation of EXCEPT ALL");
                             }
                         }
                     });

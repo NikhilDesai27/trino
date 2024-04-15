@@ -77,7 +77,7 @@ public class ScanQueryPageSource
 
         // When the _source field is requested, we need to bypass column pruning when fetching the document
         boolean needAllFields = columns.stream()
-                .map(ElasticsearchColumnHandle::name)
+                .map(ElasticsearchColumnHandle::getName)
                 .anyMatch(isEqual(SOURCE.getName()));
 
         // Columns to fetch as doc_fields instead of pulling them out of the JSON source
@@ -89,19 +89,19 @@ public class ScanQueryPageSource
                 .collect(toImmutableList());
 
         columnBuilders = columns.stream()
-                .map(ElasticsearchColumnHandle::type)
+                .map(ElasticsearchColumnHandle::getType)
                 .map(type -> type.createBlockBuilder(null, 1))
                 .toArray(BlockBuilder[]::new);
 
         List<String> requiredFields = columns.stream()
-                .map(ElasticsearchColumnHandle::name)
+                .map(ElasticsearchColumnHandle::getName)
                 .filter(name -> !isBuiltinColumn(name))
                 .collect(toList());
 
         // sorting by _doc (index order) get special treatment in Elasticsearch and is more efficient
         Optional<String> sort = Optional.of("_doc");
 
-        if (table.query().isPresent()) {
+        if (table.getQuery().isPresent()) {
             // However, if we're using a custom Elasticsearch query, use default sorting.
             // Documents will be scored and returned based on relevance
             sort = Optional.empty();
@@ -109,15 +109,15 @@ public class ScanQueryPageSource
 
         long start = System.nanoTime();
         SearchResponse searchResponse = client.beginSearch(
-                split.index(),
-                split.shard(),
-                buildSearchQuery(table.constraint().transformKeys(ElasticsearchColumnHandle.class::cast), table.query(), table.regexes()),
+                split.getIndex(),
+                split.getShard(),
+                buildSearchQuery(table.getConstraint().transformKeys(ElasticsearchColumnHandle.class::cast), table.getQuery(), table.getRegexes()),
                 needAllFields ? Optional.empty() : Optional.of(requiredFields),
                 documentFields,
                 sort,
-                table.limit());
+                table.getLimit());
         readTimeNanos += System.nanoTime() - start;
-        this.iterator = new SearchHitIterator(client, () -> searchResponse, table.limit());
+        this.iterator = new SearchHitIterator(client, () -> searchResponse, table.getLimit());
     }
 
     @Override
@@ -159,7 +159,7 @@ public class ScanQueryPageSource
             Map<String, Object> document = hit.getSourceAsMap();
 
             for (int i = 0; i < decoders.size(); i++) {
-                String field = columns.get(i).name();
+                String field = columns.get(i).getName();
                 decoders.get(i).decode(hit, () -> getField(document, field), columnBuilders[i]);
             }
 
@@ -207,7 +207,7 @@ public class ScanQueryPageSource
         Map<String, Type> result = new HashMap<>();
 
         for (ElasticsearchColumnHandle column : columns) {
-            flattenFields(result, column.name(), column.type());
+            flattenFields(result, column.getName(), column.getType());
         }
 
         return result;
@@ -228,7 +228,7 @@ public class ScanQueryPageSource
     private List<Decoder> createDecoders(List<ElasticsearchColumnHandle> columns)
     {
         return columns.stream()
-                .map(ElasticsearchColumnHandle::decoderDescriptor)
+                .map(ElasticsearchColumnHandle::getDecoderDescriptor)
                 .map(DecoderDescriptor::createDecoder)
                 .collect(toImmutableList());
     }

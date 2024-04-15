@@ -488,7 +488,7 @@ public class MySqlClient
     @Override
     public Optional<ColumnMapping> toColumnMapping(ConnectorSession session, Connection connection, JdbcTypeHandle typeHandle)
     {
-        String jdbcTypeName = typeHandle.jdbcTypeName()
+        String jdbcTypeName = typeHandle.getJdbcTypeName()
                 .orElseThrow(() -> new TrinoException(JDBC_ERROR, "Type name is missing: " + typeHandle));
 
         Optional<ColumnMapping> mapping = getForcedMappingToVarchar(typeHandle);
@@ -508,12 +508,12 @@ public class MySqlClient
             case "json":
                 return Optional.of(jsonColumnMapping());
             case "enum":
-                return Optional.of(defaultVarcharColumnMapping(typeHandle.requiredColumnSize(), false));
+                return Optional.of(defaultVarcharColumnMapping(typeHandle.getRequiredColumnSize(), false));
             case "datetime":
                 return mysqlDateTimeToTrinoTimestamp(typeHandle);
         }
 
-        switch (typeHandle.jdbcType()) {
+        switch (typeHandle.getJdbcType()) {
             case Types.BIT:
                 return Optional.of(booleanColumnMapping());
 
@@ -543,8 +543,8 @@ public class MySqlClient
 
             case Types.NUMERIC:
             case Types.DECIMAL:
-                int decimalDigits = typeHandle.decimalDigits().orElseThrow(() -> new IllegalStateException("decimal digits not present"));
-                int precision = typeHandle.requiredColumnSize();
+                int decimalDigits = typeHandle.getDecimalDigits().orElseThrow(() -> new IllegalStateException("decimal digits not present"));
+                int precision = typeHandle.getRequiredColumnSize();
                 if (getDecimalRounding(session) == ALLOW_OVERFLOW && precision > Decimals.MAX_PRECISION) {
                     int scale = min(decimalDigits, getDecimalDefaultScale(session));
                     return Optional.of(decimalColumnMapping(createDecimalType(Decimals.MAX_PRECISION, scale), getDecimalRoundingMode(session)));
@@ -557,14 +557,14 @@ public class MySqlClient
                 return Optional.of(decimalColumnMapping(createDecimalType(precision, max(decimalDigits, 0))));
 
             case Types.CHAR:
-                return Optional.of(mySqlDefaultCharColumnMapping(typeHandle.requiredColumnSize(), typeHandle.caseSensitivity()));
+                return Optional.of(mySqlDefaultCharColumnMapping(typeHandle.getRequiredColumnSize(), typeHandle.getCaseSensitivity()));
 
             // TODO not all these type constants are necessarily used by the JDBC driver
             case Types.VARCHAR:
             case Types.NVARCHAR:
             case Types.LONGVARCHAR:
             case Types.LONGNVARCHAR:
-                return Optional.of(mySqlDefaultVarcharColumnMapping(typeHandle.requiredColumnSize(), typeHandle.caseSensitivity()));
+                return Optional.of(mySqlDefaultVarcharColumnMapping(typeHandle.getRequiredColumnSize(), typeHandle.getCaseSensitivity()));
 
             case Types.BINARY:
             case Types.VARBINARY:
@@ -578,7 +578,7 @@ public class MySqlClient
                         mySqlDateWriteFunctionUsingLocalDate()));
 
             case Types.TIME:
-                TimeType timeType = createTimeType(getTimePrecision(typeHandle.requiredColumnSize()));
+                TimeType timeType = createTimeType(getTimePrecision(typeHandle.getRequiredColumnSize()));
                 requireNonNull(timeType, "timeType is null");
                 checkArgument(timeType.getPrecision() <= 9, "Unsupported type precision: %s", timeType);
                 return Optional.of(ColumnMapping.longMapping(
@@ -631,7 +631,7 @@ public class MySqlClient
 
     private Optional<ColumnMapping> mysqlDateTimeToTrinoTimestamp(JdbcTypeHandle typeHandle)
     {
-        TimestampType timestampType = createTimestampType(getTimestampPrecision(typeHandle.requiredColumnSize()));
+        TimestampType timestampType = createTimestampType(getTimestampPrecision(typeHandle.getRequiredColumnSize()));
         checkArgument(timestampType.getPrecision() <= TimestampType.MAX_SHORT_PRECISION, "Precision is out of range: %s", timestampType.getPrecision());
         return Optional.of(ColumnMapping.longMapping(
                 timestampType,
@@ -641,7 +641,7 @@ public class MySqlClient
 
     private static Optional<ColumnMapping> mysqlTimestampToTrinoTimestampWithTz(JdbcTypeHandle typeHandle)
     {
-        TimestampWithTimeZoneType trinoType = createTimestampWithTimeZoneType(getTimestampPrecision(typeHandle.requiredColumnSize()));
+        TimestampWithTimeZoneType trinoType = createTimestampWithTimeZoneType(getTimestampPrecision(typeHandle.getRequiredColumnSize()));
         if (trinoType.getPrecision() <= TimestampWithTimeZoneType.MAX_SHORT_PRECISION) {
             return Optional.of(ColumnMapping.longMapping(
                     trinoType,
@@ -968,7 +968,7 @@ public class MySqlClient
     public boolean supportsTopN(ConnectorSession session, JdbcTableHandle handle, List<JdbcSortItem> sortOrder)
     {
         for (JdbcSortItem sortItem : sortOrder) {
-            Type sortItemType = sortItem.column().getColumnType();
+            Type sortItemType = sortItem.getColumn().getColumnType();
             if (sortItemType instanceof CharType || sortItemType instanceof VarcharType) {
                 // Remote database can be case insensitive.
                 return false;
@@ -983,10 +983,10 @@ public class MySqlClient
         return Optional.of((query, sortItems, limit) -> {
             String orderBy = sortItems.stream()
                     .flatMap(sortItem -> {
-                        String ordering = sortItem.sortOrder().isAscending() ? "ASC" : "DESC";
-                        String columnSorting = format("%s %s", quoted(sortItem.column().getColumnName()), ordering);
+                        String ordering = sortItem.getSortOrder().isAscending() ? "ASC" : "DESC";
+                        String columnSorting = format("%s %s", quoted(sortItem.getColumn().getColumnName()), ordering);
 
-                        switch (sortItem.sortOrder()) {
+                        switch (sortItem.getSortOrder()) {
                             case ASC_NULLS_FIRST:
                                 // In MySQL ASC implies NULLS FIRST
                             case DESC_NULLS_LAST:
@@ -995,14 +995,14 @@ public class MySqlClient
 
                             case ASC_NULLS_LAST:
                                 return Stream.of(
-                                        format("ISNULL(%s) ASC", quoted(sortItem.column().getColumnName())),
+                                        format("ISNULL(%s) ASC", quoted(sortItem.getColumn().getColumnName())),
                                         columnSorting);
                             case DESC_NULLS_FIRST:
                                 return Stream.of(
-                                        format("ISNULL(%s) DESC", quoted(sortItem.column().getColumnName())),
+                                        format("ISNULL(%s) DESC", quoted(sortItem.getColumn().getColumnName())),
                                         columnSorting);
                         }
-                        throw new UnsupportedOperationException("Unsupported sort order: " + sortItem.sortOrder());
+                        throw new UnsupportedOperationException("Unsupported sort order: " + sortItem.getSortOrder());
                     })
                     .collect(joining(", "));
             return format("%s ORDER BY %s LIMIT %s", query, orderBy, limit);

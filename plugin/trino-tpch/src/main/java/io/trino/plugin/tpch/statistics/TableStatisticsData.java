@@ -13,16 +13,33 @@
  */
 package io.trino.plugin.tpch.statistics;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
-import static java.util.Objects.requireNonNull;
-
-public record TableStatisticsData(long rowCount, Map<String, ColumnStatisticsData> columns)
+public class TableStatisticsData
 {
-    public TableStatisticsData
+    private final long rowCount;
+    private final Map<String, ColumnStatisticsData> columns;
+
+    @JsonCreator
+    public TableStatisticsData(
+            @JsonProperty("rowCount") long rowCount,
+            @JsonProperty("columns") Map<String, ColumnStatisticsData> columns)
     {
-        columns = ImmutableMap.copyOf(requireNonNull(columns, "columns is null"));
+        this.rowCount = rowCount;
+        this.columns = ImmutableMap.copyOf(columns);
+    }
+
+    public long getRowCount()
+    {
+        return rowCount;
+    }
+
+    public Map<String, ColumnStatisticsData> getColumns()
+    {
+        return columns;
     }
 }

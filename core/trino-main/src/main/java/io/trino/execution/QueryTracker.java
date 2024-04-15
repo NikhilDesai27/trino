@@ -23,7 +23,6 @@ import io.trino.execution.QueryTracker.TrackedQuery;
 import io.trino.spi.QueryId;
 import io.trino.spi.TrinoException;
 import org.joda.time.DateTime;
-import org.weakref.jmx.Managed;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
@@ -35,7 +34,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkState;
 import static io.trino.SystemSessionProperties.getQueryMaxExecutionTime;
@@ -57,7 +55,6 @@ public class QueryTracker<T extends TrackedQuery>
 
     private final ConcurrentMap<QueryId, T> queries = new ConcurrentHashMap<>();
     private final Queue<T> expirationQueue = new LinkedBlockingQueue<>();
-    private final AtomicInteger prunedQueriesCount = new AtomicInteger();
 
     private final Duration clientTimeout;
 
@@ -212,19 +209,14 @@ public class QueryTracker<T extends TrackedQuery>
         }
 
         int count = 0;
-        int prunedCount = 0;
         // we're willing to keep full info for up to maxQueryHistory queries
         for (T query : expirationQueue) {
             if (expirationQueue.size() - count <= maxQueryHistory) {
                 break;
             }
             query.pruneInfo();
-            if (query.isInfoPruned()) {
-                prunedCount++;
-            }
             count++;
         }
-        prunedQueriesCount.set(prunedCount);
     }
 
     /**
@@ -293,24 +285,6 @@ public class QueryTracker<T extends TrackedQuery>
         return lastHeartbeat != null && lastHeartbeat.isBefore(oldestAllowedHeartbeat);
     }
 
-    @Managed
-    public int getAllQueriesCount()
-    {
-        return queries.size();
-    }
-
-    @Managed
-    public int getExpiredQueriesCount()
-    {
-        return expirationQueue.size();
-    }
-
-    @Managed
-    public int getPrunedQueriesCount()
-    {
-        return prunedQueriesCount.get();
-    }
-
     public interface TrackedQuery
     {
         QueryId getQueryId();
@@ -333,7 +307,5 @@ public class QueryTracker<T extends TrackedQuery>
 
         // XXX: This should be removed when the client protocol is improved, so that we don't need to hold onto so much query history
         void pruneInfo();
-
-        boolean isInfoPruned();
     }
 }

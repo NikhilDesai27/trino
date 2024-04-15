@@ -97,8 +97,7 @@ public class TestTableSnapshot
                             tableLocation,
                             parquetReaderOptions,
                             true,
-                            domainCompactionThreshold,
-                            Optional.empty()));
+                            domainCompactionThreshold));
                 },
                 ImmutableMultiset.<FileOperation>builder()
                         .addCopies(new FileOperation("_last_checkpoint", "InputFile.newStream"), 1)
@@ -128,8 +127,7 @@ public class TestTableSnapshot
                 tableLocation,
                 parquetReaderOptions,
                 true,
-                domainCompactionThreshold,
-                Optional.empty());
+                domainCompactionThreshold);
         TestingConnectorContext context = new TestingConnectorContext();
         TypeManager typeManager = context.getTypeManager();
         TransactionLogAccess transactionLogAccess = new TransactionLogAccess(
@@ -256,8 +254,7 @@ public class TestTableSnapshot
                 tableLocation,
                 parquetReaderOptions,
                 true,
-                domainCompactionThreshold,
-                Optional.empty());
+                domainCompactionThreshold);
         assertThat(tableSnapshot.getVersion()).isEqualTo(13L);
     }
 

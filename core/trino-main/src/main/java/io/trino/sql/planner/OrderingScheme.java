@@ -13,6 +13,8 @@
  */
 package io.trino.sql.planner;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -23,51 +25,96 @@ import io.trino.spi.connector.SortingProperty;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
-public record OrderingScheme(
-        List<Symbol> orderBy,
-        Map<Symbol, SortOrder> orderings)
+public class OrderingScheme
 {
-    public OrderingScheme
+    private final List<Symbol> orderBy;
+    private final Map<Symbol, SortOrder> orderings;
+
+    @JsonCreator
+    public OrderingScheme(@JsonProperty("orderBy") List<Symbol> orderBy, @JsonProperty("orderings") Map<Symbol, SortOrder> orderings)
     {
         requireNonNull(orderBy, "orderBy is null");
         requireNonNull(orderings, "orderings is null");
         checkArgument(!orderBy.isEmpty(), "orderBy is empty");
         checkArgument(orderings.keySet().equals(ImmutableSet.copyOf(orderBy)), "orderBy keys and orderings don't match");
-        orderBy = ImmutableList.copyOf(orderBy);
-        orderings = ImmutableMap.copyOf(orderings);
+        this.orderBy = ImmutableList.copyOf(orderBy);
+        this.orderings = ImmutableMap.copyOf(orderings);
     }
 
-    public List<SortOrder> orderingList()
+    @JsonProperty
+    public List<Symbol> getOrderBy()
+    {
+        return orderBy;
+    }
+
+    @JsonProperty
+    public Map<Symbol, SortOrder> getOrderings()
+    {
+        return orderings;
+    }
+
+    public List<SortOrder> getOrderingList()
     {
         return orderBy.stream()
                 .map(orderings::get)
                 .collect(toImmutableList());
     }
 
-    public SortOrder ordering(Symbol symbol)
+    public SortOrder getOrdering(Symbol symbol)
     {
         checkArgument(orderings.containsKey(symbol), "No ordering for symbol: %s", symbol);
         return orderings.get(symbol);
     }
 
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        OrderingScheme that = (OrderingScheme) o;
+        return Objects.equals(orderBy, that.orderBy) &&
+                Objects.equals(orderings, that.orderings);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(orderBy, orderings);
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("orderBy", orderBy)
+                .add("orderings", orderings)
+                .toString();
+    }
+
     public List<SortItem> toSortItems()
     {
-        return orderBy().stream()
-                .map(symbol -> new SortItem(
-                        symbol.name(),
-                        SortOrder.valueOf(ordering(symbol).name())))
+        return getOrderBy().stream()
+                .map(symbol -> new io.trino.spi.connector.SortItem(
+                        symbol.getName(),
+                        io.trino.spi.connector.SortOrder.valueOf(getOrdering(symbol).name())))
                 .collect(toImmutableList());
     }
 
     public List<LocalProperty<Symbol>> toLocalProperties()
     {
-        return orderBy().stream()
-                .map(symbol -> new SortingProperty<>(symbol, ordering(symbol)))
+        return getOrderBy().stream()
+                .map(symbol -> new SortingProperty<>(symbol, getOrdering(symbol)))
                 .collect(toImmutableList());
     }
 }

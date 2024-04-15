@@ -14,7 +14,6 @@
 package io.trino.execution;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.trino.execution.warnings.WarningCollector;
 import io.trino.metadata.QualifiedObjectName;
@@ -59,7 +58,7 @@ public class TestCommentTask
     public void testCommentTableOnView()
     {
         QualifiedObjectName viewName = qualifiedObjectName("existing_view");
-        metadata.createView(testSession, viewName, someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, viewName, someView(), false);
 
         assertTrinoExceptionThrownBy(() -> getFutureValue(setComment(TABLE, asQualifiedName(viewName), Optional.of("new comment"))))
                 .hasErrorCode(TABLE_NOT_FOUND)
@@ -81,7 +80,7 @@ public class TestCommentTask
     public void testCommentView()
     {
         QualifiedObjectName viewName = qualifiedObjectName("existing_view");
-        metadata.createView(testSession, viewName, someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, viewName, someView(), false);
         assertThat(metadata.isView(testSession, viewName)).isTrue();
 
         getFutureValue(setComment(VIEW, asQualifiedName(viewName), Optional.of("new comment")));
@@ -130,7 +129,7 @@ public class TestCommentTask
         QualifiedObjectName viewName = qualifiedObjectName("existing_view");
         QualifiedName columnName = qualifiedColumnName("existing_view", "test");
         QualifiedName missingColumnName = qualifiedColumnName("existing_view", "missing");
-        metadata.createView(testSession, viewName, someView(), ImmutableMap.of(), false);
+        metadata.createView(testSession, viewName, someView(), false);
         assertThat(metadata.isView(testSession, viewName)).isTrue();
 
         getFutureValue(setComment(COLUMN, columnName, Optional.of("new test column comment")));

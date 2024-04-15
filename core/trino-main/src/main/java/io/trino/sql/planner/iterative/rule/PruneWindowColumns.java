@@ -54,7 +54,7 @@ public class PruneWindowColumns
 
         windowNode.getOrderingScheme().ifPresent(
                 orderingScheme -> orderingScheme
-                        .orderBy()
+                        .getOrderBy()
                         .forEach(referencedInputs::add));
         windowNode.getHashSymbol().ifPresent(referencedInputs::add);
 

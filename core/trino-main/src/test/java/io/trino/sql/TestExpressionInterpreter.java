@@ -77,7 +77,7 @@ public class TestExpressionInterpreter
             new Symbol(INTEGER, "unbound_value"));
 
     private static final SymbolResolver INPUTS = symbol -> {
-        if (symbol.name().toLowerCase(ENGLISH).equals("bound_value")) {
+        if (symbol.getName().toLowerCase(ENGLISH).equals("bound_value")) {
             return Optional.of(new Constant(INTEGER, 1234L));
         }
 
@@ -346,10 +346,6 @@ public class TestExpressionInterpreter
         assertOptimizedEquals(
                 new Between(new Reference(INTEGER, "bound_value"), new Constant(INTEGER, 3L), new Constant(INTEGER, 4L)),
                 FALSE);
-
-        assertOptimizedEquals(
-                new Between(new Reference(INTEGER, "unbound_value"), new Constant(INTEGER, 3L), new Constant(INTEGER, 0L)),
-                ifExpression(new Not(new IsNull(new Reference(INTEGER, "unbound_value"))), FALSE));
     }
 
     @Test
@@ -539,7 +535,7 @@ public class TestExpressionInterpreter
                 new Constant(INTEGER, 1L));
         assertEvaluatedEquals(
                 new Case(ImmutableList.of(
-                        new WhenClause(TRUE, new Constant(INTEGER, 1L))),
+                        new WhenClause(TRUE, new Constant(INTEGER, 1L)), new WhenClause(new Comparison(EQUAL, new Call(DIVIDE_INTEGER, ImmutableList.of(new Constant(INTEGER, 0L), new Constant(INTEGER, 0L))), new Constant(INTEGER, 0L)), new Constant(INTEGER, 2L))),
                         new Call(DIVIDE_INTEGER, ImmutableList.of(new Constant(INTEGER, 0L), new Constant(INTEGER, 0L)))),
                 new Constant(INTEGER, 1L));
     }
@@ -703,7 +699,7 @@ public class TestExpressionInterpreter
                 new Switch(
                         new Constant(INTEGER, null),
                         ImmutableList.of(
-                                new WhenClause(new Constant(INTEGER, 1L), new Call(DIVIDE_INTEGER, ImmutableList.of(new Constant(INTEGER, 0L), new Constant(INTEGER, 0L))))),
+                                new WhenClause(new Call(DIVIDE_INTEGER, ImmutableList.of(new Constant(INTEGER, 0L), new Constant(INTEGER, 0L))), new Call(DIVIDE_INTEGER, ImmutableList.of(new Constant(INTEGER, 0L), new Constant(INTEGER, 0L))))),
                         new Constant(INTEGER, 1L)),
                 new Constant(INTEGER, 1L));
         assertEvaluatedEquals(
@@ -890,10 +886,6 @@ public class TestExpressionInterpreter
                 .hasErrorCode(DIVISION_BY_ZERO);
         assertTrinoExceptionThrownBy(() -> evaluate(new FieldReference(new Row(ImmutableList.of(new Call(DIVIDE_INTEGER, ImmutableList.of(new Constant(INTEGER, 0L), new Constant(INTEGER, 0L))), new Constant(INTEGER, 1L))), 1)))
                 .hasErrorCode(DIVISION_BY_ZERO);
-
-        assertOptimizedEquals(
-                new FieldReference(new Row(ImmutableList.of(new Reference(INTEGER, "unbound_value"), new Constant(INTEGER, 5L))), 0),
-                new Reference(INTEGER, "unbound_value"));
     }
 
     private static void assertOptimizedEquals(Expression actual, Expression expected)
@@ -908,7 +900,7 @@ public class TestExpressionInterpreter
         SymbolAliases.Builder aliases = SymbolAliases.builder();
 
         for (Symbol symbol : SYMBOLS) {
-            aliases.put(symbol.name(), symbol.toSymbolReference());
+            aliases.put(symbol.getName(), symbol.toSymbolReference());
         }
 
         assertExpressionEquals(actualOptimized, expected, aliases.build());

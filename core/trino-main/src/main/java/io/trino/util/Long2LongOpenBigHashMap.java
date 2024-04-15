@@ -742,11 +742,12 @@ public class Long2LongOpenBigHashMap
         return newValue.longValue();
     }
 
-    /**
-     * {@inheritDoc}
+    /*
+     * Removes all elements from this map.
      *
      * <p>To increase object reuse, this method does not change the table size. If
      * you want to reduce the table size, you must use {@link #trim()}.
+     *
      */
     @Override
     public void clear()

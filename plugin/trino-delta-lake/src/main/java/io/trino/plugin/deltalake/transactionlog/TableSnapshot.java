@@ -93,12 +93,11 @@ public class TableSnapshot
             String tableLocation,
             ParquetReaderOptions parquetReaderOptions,
             boolean checkpointRowStatisticsWritingEnabled,
-            int domainCompactionThreshold,
-            Optional<Long> endVersion)
+            int domainCompactionThreshold)
             throws IOException
     {
         Optional<Long> lastCheckpointVersion = lastCheckpoint.map(LastCheckpoint::version);
-        TransactionLogTail transactionLogTail = TransactionLogTail.loadNewTail(fileSystem, tableLocation, lastCheckpointVersion, endVersion);
+        TransactionLogTail transactionLogTail = TransactionLogTail.loadNewTail(fileSystem, tableLocation, lastCheckpointVersion, Optional.empty());
 
         return new TableSnapshot(
                 table,
@@ -128,8 +127,7 @@ public class TableSnapshot
                             tableLocation,
                             parquetReaderOptions,
                             checkpointRowStatisticsWritingEnabled,
-                            domainCompactionThreshold,
-                            Optional.empty()));
+                            domainCompactionThreshold));
                 }
             }
         }

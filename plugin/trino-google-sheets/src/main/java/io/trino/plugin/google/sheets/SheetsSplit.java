@@ -13,36 +13,45 @@
  */
 package io.trino.plugin.google.sheets;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.slice.SizeOf;
 import io.trino.spi.connector.ConnectorSplit;
 
 import java.util.List;
-import java.util.Map;
 
 import static io.airlift.slice.SizeOf.estimatedSizeOf;
 import static io.airlift.slice.SizeOf.instanceSize;
 import static java.util.Objects.requireNonNull;
 
-public record SheetsSplit(List<List<String>> values)
+public class SheetsSplit
         implements ConnectorSplit
 {
     private static final int INSTANCE_SIZE = instanceSize(SheetsSplit.class);
 
-    public SheetsSplit
+    private final List<List<String>> values;
+
+    @JsonCreator
+    public SheetsSplit(
+            @JsonProperty("values") List<List<String>> values)
     {
-        requireNonNull(values, "values is null");
+        this.values = requireNonNull(values, "values is null");
     }
 
-    @JsonIgnore // TODO remove after https://github.com/airlift/airlift/pull/1141
+    @JsonProperty
+    public List<List<String>> getValues()
+    {
+        return values;
+    }
+
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return ImmutableMap.of();
+        ImmutableMap.Builder<Object, Object> builder = ImmutableMap.builder();
+        return builder.buildOrThrow();
     }
 
-    @JsonIgnore // TODO remove after https://github.com/airlift/airlift/pull/1141
     @Override
     public long getRetainedSizeInBytes()
     {

@@ -54,7 +54,7 @@ public interface SplitSource
         }
 
         /**
-         * Returns {@code true<} if all splits for the requested driver group have been returned.
+         * Returns <tt>true</tt> if all splits for the requested driver group have been returned.
          * In other hands, splits returned from this and all previous invocations of {@link #getNextBatch}
          * form the complete set of splits in the requested driver group.
          */

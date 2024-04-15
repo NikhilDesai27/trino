@@ -13,26 +13,22 @@
  */
 package io.trino.plugin.opensearch;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ConnectorTableHandle;
 import io.trino.spi.predicate.TupleDomain;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-public record OpenSearchTableHandle(
-        Type type,
-        String schema,
-        String index,
-        TupleDomain<ColumnHandle> constraint,
-        Map<String, String> regexes,
-        Optional<String> query,
-        OptionalLong limit)
+public final class OpenSearchTableHandle
         implements ConnectorTableHandle
 {
     public enum Type
@@ -40,27 +36,110 @@ public record OpenSearchTableHandle(
         SCAN, QUERY
     }
 
+    private final Type type;
+    private final String schema;
+    private final String index;
+    private final TupleDomain<ColumnHandle> constraint;
+    private final Map<String, String> regexes;
+    private final Optional<String> query;
+    private final OptionalLong limit;
+
     public OpenSearchTableHandle(Type type, String schema, String index, Optional<String> query)
     {
-        this(
-                type,
-                schema,
-                index,
-                TupleDomain.all(),
-                ImmutableMap.of(),
-                query,
-                OptionalLong.empty());
+        this.type = requireNonNull(type, "type is null");
+        this.schema = requireNonNull(schema, "schema is null");
+        this.index = requireNonNull(index, "index is null");
+        this.query = requireNonNull(query, "query is null");
+
+        constraint = TupleDomain.all();
+        regexes = ImmutableMap.of();
+        limit = OptionalLong.empty();
     }
 
-    public OpenSearchTableHandle
+    @JsonCreator
+    public OpenSearchTableHandle(
+            @JsonProperty("type") Type type,
+            @JsonProperty("schema") String schema,
+            @JsonProperty("index") String index,
+            @JsonProperty("constraint") TupleDomain<ColumnHandle> constraint,
+            @JsonProperty("regexes") Map<String, String> regexes,
+            @JsonProperty("query") Optional<String> query,
+            @JsonProperty("limit") OptionalLong limit)
     {
-        requireNonNull(type, "type is null");
-        requireNonNull(schema, "schema is null");
-        requireNonNull(index, "index is null");
-        requireNonNull(constraint, "constraint is null");
-        regexes = ImmutableMap.copyOf(requireNonNull(regexes, "regexes is null"));
-        requireNonNull(query, "query is null");
-        requireNonNull(limit, "limit is null");
+        this.type = requireNonNull(type, "type is null");
+        this.schema = requireNonNull(schema, "schema is null");
+        this.index = requireNonNull(index, "index is null");
+        this.constraint = requireNonNull(constraint, "constraint is null");
+        this.regexes = ImmutableMap.copyOf(requireNonNull(regexes, "regexes is null"));
+        this.query = requireNonNull(query, "query is null");
+        this.limit = requireNonNull(limit, "limit is null");
+    }
+
+    @JsonProperty
+    public Type getType()
+    {
+        return type;
+    }
+
+    @JsonProperty
+    public String getSchema()
+    {
+        return schema;
+    }
+
+    @JsonProperty
+    public String getIndex()
+    {
+        return index;
+    }
+
+    @JsonProperty
+    public TupleDomain<ColumnHandle> getConstraint()
+    {
+        return constraint;
+    }
+
+    @JsonProperty
+    public Map<String, String> getRegexes()
+    {
+        return regexes;
+    }
+
+    @JsonProperty
+    public OptionalLong getLimit()
+    {
+        return limit;
+    }
+
+    @JsonProperty
+    public Optional<String> getQuery()
+    {
+        return query;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        OpenSearchTableHandle that = (OpenSearchTableHandle) o;
+        return type == that.type &&
+                schema.equals(that.schema) &&
+                index.equals(that.index) &&
+                constraint.equals(that.constraint) &&
+                regexes.equals(that.regexes) &&
+                query.equals(that.query) &&
+                limit.equals(that.limit);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(type, schema, index, constraint, regexes, query, limit);
     }
 
     @Override

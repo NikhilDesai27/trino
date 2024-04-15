@@ -215,9 +215,9 @@ public class TpchMetadata
     {
         TpchTableHandle tpchTableHandle = (TpchTableHandle) tableHandle;
 
-        TpchTable<?> tpchTable = TpchTable.getTable(tpchTableHandle.tableName());
+        TpchTable<?> tpchTable = TpchTable.getTable(tpchTableHandle.getTableName());
 
-        return getTableMetadata(tpchTableHandle.schemaName(), tpchTable, columnNaming);
+        return getTableMetadata(tpchTableHandle.getSchemaName(), tpchTable, columnNaming);
     }
 
     private ConnectorTableMetadata getTableMetadata(String schemaName, TpchTable<?> tpchTable, ColumnNaming columnNaming)
@@ -269,13 +269,13 @@ public class TpchMetadata
     public TableStatistics getTableStatistics(ConnectorSession session, ConnectorTableHandle tableHandle)
     {
         TpchTableHandle tpchTableHandle = (TpchTableHandle) tableHandle;
-        String tableName = tpchTableHandle.tableName();
+        String tableName = tpchTableHandle.getTableName();
         TpchTable<?> tpchTable = TpchTable.getTable(tableName);
         Map<TpchColumn<?>, List<Object>> columnValuesRestrictions = ImmutableMap.of();
         if (predicatePushdownEnabled) {
-            columnValuesRestrictions = getColumnValuesRestrictions(tpchTable, tpchTableHandle.constraint());
+            columnValuesRestrictions = getColumnValuesRestrictions(tpchTable, tpchTableHandle.getConstraint());
         }
-        Optional<TableStatisticsData> optionalTableStatisticsData = statisticsEstimator.estimateStats(tpchTable, columnValuesRestrictions, tpchTableHandle.scaleFactor());
+        Optional<TableStatisticsData> optionalTableStatisticsData = statisticsEstimator.estimateStats(tpchTable, columnValuesRestrictions, tpchTableHandle.getScaleFactor());
 
         Map<String, ColumnHandle> columnHandles = getColumnHandles(session, tpchTableHandle);
         return optionalTableStatisticsData
@@ -314,17 +314,17 @@ public class TpchMetadata
     private TableStatistics toTableStatistics(TableStatisticsData tableStatisticsData, TpchTableHandle tpchTableHandle, Map<String, ColumnHandle> columnHandles)
     {
         TableStatistics.Builder builder = TableStatistics.builder()
-                .setRowCount(Estimate.of(tableStatisticsData.rowCount()));
-        tableStatisticsData.columns().forEach((columnName, stats) -> {
+                .setRowCount(Estimate.of(tableStatisticsData.getRowCount()));
+        tableStatisticsData.getColumns().forEach((columnName, stats) -> {
             TpchColumnHandle columnHandle = (TpchColumnHandle) getColumnHandle(tpchTableHandle, columnHandles, columnName);
-            builder.setColumnStatistics(columnHandle, toColumnStatistics(stats, columnHandle.type()));
+            builder.setColumnStatistics(columnHandle, toColumnStatistics(stats, columnHandle.getType()));
         });
         return builder.build();
     }
 
     private ColumnHandle getColumnHandle(TpchTableHandle tpchTableHandle, Map<String, ColumnHandle> columnHandles, String columnName)
     {
-        TpchTable<?> table = TpchTable.getTable(tpchTableHandle.tableName());
+        TpchTable<?> table = TpchTable.getTable(tpchTableHandle.getTableName());
         return columnHandles.get(columnNaming.getName(table.getColumn(columnName)));
     }
 
@@ -332,9 +332,9 @@ public class TpchMetadata
     {
         return ColumnStatistics.builder()
                 .setNullsFraction(Estimate.zero())
-                .setDistinctValuesCount(stats.distinctValuesCount().map(Estimate::of).orElse(Estimate.unknown()))
-                .setDataSize(stats.dataSize().map(Estimate::of).orElse(Estimate.unknown()))
-                .setRange(toRange(stats.min(), stats.max(), columnType))
+                .setDistinctValuesCount(stats.getDistinctValuesCount().map(Estimate::of).orElse(Estimate.unknown()))
+                .setDataSize(stats.getDataSize().map(Estimate::of).orElse(Estimate.unknown()))
+                .setRange(toRange(stats.getMin(), stats.getMax(), columnType))
                 .build();
     }
 
@@ -394,7 +394,7 @@ public class TpchMetadata
     public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle, ColumnHandle columnHandle)
     {
         ConnectorTableMetadata tableMetadata = getTableMetadata(session, tableHandle);
-        String columnName = ((TpchColumnHandle) columnHandle).columnName();
+        String columnName = ((TpchColumnHandle) columnHandle).getColumnName();
 
         for (ColumnMetadata column : tableMetadata.getColumns()) {
             if (column.getName().equals(columnName)) {
@@ -425,22 +425,22 @@ public class TpchMetadata
         List<LocalProperty<ColumnHandle>> localProperties = ImmutableList.of();
 
         Map<String, ColumnHandle> columns = getColumnHandles(session, tableHandle);
-        if (partitioningEnabled && tableHandle.tableName().equals(TpchTable.ORDERS.getTableName())) {
+        if (partitioningEnabled && tableHandle.getTableName().equals(TpchTable.ORDERS.getTableName())) {
             ColumnHandle orderKeyColumn = columns.get(columnNaming.getName(OrderColumn.ORDER_KEY));
             tablePartitioning = Optional.of(new ConnectorTablePartitioning(
                     new TpchPartitioningHandle(
                             TpchTable.ORDERS.getTableName(),
-                            calculateTotalRows(OrderGenerator.SCALE_BASE, tableHandle.scaleFactor())),
+                            calculateTotalRows(OrderGenerator.SCALE_BASE, tableHandle.getScaleFactor())),
                     ImmutableList.of(orderKeyColumn),
                     true));
             localProperties = ImmutableList.of(new SortingProperty<>(orderKeyColumn, SortOrder.ASC_NULLS_FIRST));
         }
-        else if (partitioningEnabled && tableHandle.tableName().equals(TpchTable.LINE_ITEM.getTableName())) {
+        else if (partitioningEnabled && tableHandle.getTableName().equals(TpchTable.LINE_ITEM.getTableName())) {
             ColumnHandle orderKeyColumn = columns.get(columnNaming.getName(LineItemColumn.ORDER_KEY));
             tablePartitioning = Optional.of(new ConnectorTablePartitioning(
                     new TpchPartitioningHandle(
                             TpchTable.ORDERS.getTableName(),
-                            calculateTotalRows(OrderGenerator.SCALE_BASE, tableHandle.scaleFactor())),
+                            calculateTotalRows(OrderGenerator.SCALE_BASE, tableHandle.getScaleFactor())),
                     ImmutableList.of(orderKeyColumn),
                     true));
             localProperties = ImmutableList.of(
@@ -448,12 +448,12 @@ public class TpchMetadata
                     new SortingProperty<>(columns.get(columnNaming.getName(LineItemColumn.LINE_NUMBER)), SortOrder.ASC_NULLS_FIRST));
         }
 
-        TupleDomain<ColumnHandle> constraint = tableHandle.constraint();
+        TupleDomain<ColumnHandle> constraint = tableHandle.getConstraint();
         if (predicatePushdownEnabled && constraint.isAll()) {
-            if (tableHandle.tableName().equals(TpchTable.ORDERS.getTableName())) {
+            if (tableHandle.getTableName().equals(TpchTable.ORDERS.getTableName())) {
                 constraint = toTupleDomain(ImmutableMap.of(toColumnHandle(OrderColumn.ORDER_STATUS), orderStatusNullableValues));
             }
-            else if (tableHandle.tableName().equals(TpchTable.PART.getTableName())) {
+            else if (tableHandle.getTableName().equals(TpchTable.PART.getTableName())) {
                 constraint = toTupleDomain(ImmutableMap.of(
                         toColumnHandle(PartColumn.CONTAINER),
                         partContainerNullableValues,
@@ -474,17 +474,17 @@ public class TpchMetadata
     {
         TpchTableHandle handle = (TpchTableHandle) table;
 
-        TupleDomain<ColumnHandle> oldDomain = handle.constraint();
+        TupleDomain<ColumnHandle> oldDomain = handle.getConstraint();
 
         TupleDomain<ColumnHandle> predicate = TupleDomain.all();
         TupleDomain<ColumnHandle> unenforcedConstraint = constraint.getSummary();
-        if (predicatePushdownEnabled && handle.tableName().equals(TpchTable.ORDERS.getTableName())) {
+        if (predicatePushdownEnabled && handle.getTableName().equals(TpchTable.ORDERS.getTableName())) {
             predicate = toTupleDomain(ImmutableMap.of(
                     toColumnHandle(OrderColumn.ORDER_STATUS),
                     filterValues(orderStatusNullableValues, OrderColumn.ORDER_STATUS, constraint)));
             unenforcedConstraint = filterOutColumnFromPredicate(constraint.getSummary(), toColumnHandle(OrderColumn.ORDER_STATUS));
         }
-        else if (predicatePushdownEnabled && handle.tableName().equals(TpchTable.PART.getTableName())) {
+        else if (predicatePushdownEnabled && handle.getTableName().equals(TpchTable.PART.getTableName())) {
             predicate = toTupleDomain(ImmutableMap.of(
                     toColumnHandle(PartColumn.CONTAINER),
                     filterValues(partContainerNullableValues, PartColumn.CONTAINER, constraint),
@@ -500,9 +500,9 @@ public class TpchMetadata
 
         return Optional.of(new ConstraintApplicationResult<>(
                 new TpchTableHandle(
-                        handle.schemaName(),
-                        handle.tableName(),
-                        handle.scaleFactor(),
+                        handle.getSchemaName(),
+                        handle.getTableName(),
+                        handle.getScaleFactor(),
                         oldDomain.intersect(predicate)),
                 unenforcedConstraint,
                 constraint.getExpression(),
@@ -519,22 +519,22 @@ public class TpchMetadata
 
         CatalogSchemaTableName destinationTable = new CatalogSchemaTableName(
                 destinationCatalog.get(),
-                destinationSchema.orElse(handle.schemaName()),
-                handle.tableName());
+                destinationSchema.orElse(handle.getSchemaName()),
+                handle.getTableName());
         return Optional.of(
                 new TableScanRedirectApplicationResult(
                         destinationTable,
                         ImmutableBiMap.copyOf(getColumnHandles(session, table)).inverse(),
-                        handle.constraint()
+                        handle.getConstraint()
                                 .transformKeys(TpchColumnHandle.class::cast)
-                                .transformKeys(TpchColumnHandle::columnName)));
+                                .transformKeys(TpchColumnHandle::getColumnName)));
     }
 
     private static TupleDomain<ColumnHandle> toTupleDomain(Map<TpchColumnHandle, Set<NullableValue>> predicate)
     {
         return TupleDomain.withColumnDomains(predicate.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-                    Type type = entry.getKey().type();
+                    Type type = entry.getKey().getType();
                     return entry.getValue().stream()
                             .map(nullableValue -> Domain.singleValue(type, nullableValue.getValue()))
                             .reduce(Domain::union)

@@ -61,12 +61,12 @@ public record TableChangesSplit(
     }
 
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return ImmutableMap.<String, String>builder()
+        return ImmutableMap.builder()
                 .put("path", path)
-                .put("start", String.valueOf(start))
-                .put("length", String.valueOf(length))
+                .put("start", start)
+                .put("length", length)
                 .buildOrThrow();
     }
 

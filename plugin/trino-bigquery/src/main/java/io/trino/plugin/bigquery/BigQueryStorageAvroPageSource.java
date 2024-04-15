@@ -104,10 +104,10 @@ public class BigQueryStorageAvroPageSource
         this.readBytes = new AtomicLong();
         requireNonNull(columns, "columns is null");
         this.columnNames = columns.stream()
-                .map(BigQueryColumnHandle::name)
+                .map(BigQueryColumnHandle::getName)
                 .collect(toImmutableList());
         this.columnTypes = columns.stream()
-                .map(BigQueryColumnHandle::trinoType)
+                .map(BigQueryColumnHandle::getTrinoType)
                 .collect(toImmutableList());
         this.pageBuilder = new PageBuilder(columnTypes);
 

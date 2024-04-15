@@ -14,6 +14,7 @@
 package io.trino.spi.block;
 
 import com.google.errorprone.annotations.ThreadSafe;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 import io.trino.spi.TrinoException;
 import io.trino.spi.type.MapType;
 import jakarta.annotation.Nullable;
@@ -45,6 +46,7 @@ public final class MapHashTables
     private final int hashTableCount;
 
     @SuppressWarnings("VolatileArrayField")
+    @GuardedBy("this")
     @Nullable
     private volatile int[] hashTables;
 

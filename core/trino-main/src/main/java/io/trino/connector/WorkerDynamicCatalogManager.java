@@ -13,6 +13,7 @@
  */
 package io.trino.connector;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.ThreadSafe;
@@ -25,7 +26,6 @@ import io.trino.spi.TrinoException;
 import io.trino.spi.catalog.CatalogProperties;
 import io.trino.spi.connector.CatalogHandle;
 import io.trino.spi.connector.ConnectorName;
-import io.trino.util.AutoCloseableCloser;
 import jakarta.annotation.PreDestroy;
 
 import java.util.ArrayList;
@@ -39,16 +39,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static io.airlift.concurrent.Threads.daemonThreadsNamed;
 import static io.trino.spi.StandardErrorCode.GENERIC_INTERNAL_ERROR;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.Executors.newCachedThreadPool;
 
 @ThreadSafe
 public class WorkerDynamicCatalogManager
@@ -62,9 +61,9 @@ public class WorkerDynamicCatalogManager
     private final Lock catalogLoadingLock = catalogsLock.readLock();
     private final Lock catalogRemovingLock = catalogsLock.writeLock();
     private final ConcurrentMap<CatalogHandle, CatalogConnector> catalogs = new ConcurrentHashMap<>();
-    private final ExecutorService executor = newCachedThreadPool(daemonThreadsNamed("worker-dynamic-catalog-manager-%s"));
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-    @GuardedBy("catalogsLock")
+    @GuardedBy("catalogsUpdateLock")
     private boolean stopped;
 
     @Inject
@@ -75,24 +74,25 @@ public class WorkerDynamicCatalogManager
 
     @PreDestroy
     public void stop()
-            throws Exception
     {
-        try (AutoCloseableCloser closer = AutoCloseableCloser.create()) {
-            catalogRemovingLock.lock();
-            try {
-                if (stopped) {
-                    return;
-                }
-                stopped = true;
+        List<CatalogConnector> catalogs;
 
-                catalogs.values().forEach(catalog -> closer.register(catalog::shutdown));
-                catalogs.clear();
+        catalogRemovingLock.lock();
+        try {
+            if (stopped) {
+                return;
             }
-            finally {
-                catalogRemovingLock.unlock();
-            }
+            stopped = true;
 
-            closer.register(executor::shutdownNow);
+            catalogs = ImmutableList.copyOf(this.catalogs.values());
+            this.catalogs.clear();
+        }
+        finally {
+            catalogRemovingLock.unlock();
+        }
+
+        for (CatalogConnector connector : catalogs) {
+            connector.shutdown();
         }
     }
 

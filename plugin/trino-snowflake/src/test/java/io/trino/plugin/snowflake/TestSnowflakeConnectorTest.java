@@ -111,7 +111,9 @@ public class TestSnowflakeConnectorTest
             return Optional.empty();
         }
         // Error: Failed to insert data: SQL compilation error: error line 1 at position 130
-        if (typeName.equals("timestamp(6)")) {
+        if (typeName.equals("time")
+                || typeName.equals("time(6)")
+                || typeName.equals("timestamp(6)")) {
             return Optional.empty();
         }
         // Error: not equal
@@ -356,18 +358,6 @@ public class TestSnowflakeConnectorTest
                 .hasMessageContaining("For query")
                 .hasMessageContaining("Actual rows")
                 .hasMessageContaining("Expected rows");
-    }
-
-    @Test
-    @Override // Override to specify the schema name in WHERE condition because listing tables in all schemas is too slow
-    public void testInformationSchemaFiltering()
-    {
-        assertQuery(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'tpch' AND table_name = 'orders' LIMIT 1",
-                "SELECT 'orders' table_name");
-        assertQuery(
-                "SELECT table_name FROM information_schema.columns WHERE data_type = 'bigint' AND table_schema = 'tpch' AND table_name = 'nation' and column_name = 'nationkey' LIMIT 1",
-                "SELECT 'nation' table_name");
     }
 
     @Test

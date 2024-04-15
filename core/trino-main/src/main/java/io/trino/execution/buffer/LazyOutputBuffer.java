@@ -58,7 +58,8 @@ public class LazyOutputBuffer
     private final ExchangeManagerRegistry exchangeManagerRegistry;
 
     // Note: this is a write once field, so an unsynchronized volatile read that returns a non-null value is safe, but if a null value is observed instead
-    // a subsequent synchronized read is required to ensure only one thread does the initialization
+    // a subsequent synchronized read is required to ensure the writing thread can complete any in-flight initialization
+    @GuardedBy("this")
     private volatile OutputBuffer delegate;
 
     @GuardedBy("this")

@@ -13,16 +13,58 @@
  */
 package io.trino.plugin.jdbc;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.errorprone.annotations.Immutable;
 import io.trino.spi.connector.SortOrder;
+
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
-public record JdbcSortItem(JdbcColumnHandle column, SortOrder sortOrder)
+@Immutable
+public final class JdbcSortItem
 {
-    public JdbcSortItem
+    private final JdbcColumnHandle column;
+    private final SortOrder sortOrder;
+
+    @JsonCreator
+    public JdbcSortItem(JdbcColumnHandle column, SortOrder sortOrder)
     {
-        requireNonNull(column, "column is null");
-        requireNonNull(sortOrder, "sortOrder is null");
+        this.column = requireNonNull(column, "column is null");
+        this.sortOrder = requireNonNull(sortOrder, "sortOrder is null");
+    }
+
+    @JsonProperty
+    public JdbcColumnHandle getColumn()
+    {
+        return column;
+    }
+
+    @JsonProperty
+    public SortOrder getSortOrder()
+    {
+        return sortOrder;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        JdbcSortItem that = (JdbcSortItem) o;
+        return sortOrder == that.sortOrder &&
+                Objects.equals(column, that.column);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(column, sortOrder);
     }
 
     @Override

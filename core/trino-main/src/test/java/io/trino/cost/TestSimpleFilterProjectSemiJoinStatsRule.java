@@ -26,10 +26,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
+import static io.trino.spi.type.BigintType.BIGINT;
 import static io.trino.spi.type.BooleanType.BOOLEAN;
-import static io.trino.spi.type.DoubleType.DOUBLE;
+import static io.trino.spi.type.IntegerType.INTEGER;
 import static io.trino.sql.ir.Comparison.Operator.LESS_THAN;
 import static io.trino.sql.ir.Logical.Operator.AND;
+import static io.trino.type.UnknownType.UNKNOWN;
 
 public class TestSimpleFilterProjectSemiJoinStatsRule
         extends BaseStatsCalculatorTest
@@ -83,9 +85,9 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
     public void testFilterPositiveSemiJoin()
     {
         tester().assertStatsFor(pb -> {
-            Symbol a = pb.symbol("a", DOUBLE);
-            Symbol b = pb.symbol("b", DOUBLE);
-            Symbol c = pb.symbol("c", DOUBLE);
+            Symbol a = pb.symbol("a", BIGINT);
+            Symbol b = pb.symbol("b", BIGINT);
+            Symbol c = pb.symbol("c", BIGINT);
             Symbol semiJoinOutput = pb.symbol("sjo", BOOLEAN);
             return pb.filter(
                     semiJoinOutput.toSymbolReference(),
@@ -101,19 +103,19 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
         })
                 .withSourceStats(LEFT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "a"), aStats)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "b"), bStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "a"), aStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "b"), bStats)
                         .build())
                 .withSourceStats(RIGHT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(2000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "c"), cStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "c"), cStats)
                         .build())
                 .check(check -> {
                     check.outputRowsCount(180)
                             .symbolStats("a", assertion -> assertion.isEqualTo(expectedAInC))
                             .symbolStats("b", assertion -> assertion.isEqualTo(bStats))
-                            .symbolStatsUnknown("c", DOUBLE)
-                            .symbolStatsUnknown("sjo", BOOLEAN);
+                            .symbolStatsUnknown("c")
+                            .symbolStatsUnknown("sjo");
                 });
     }
 
@@ -121,9 +123,9 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
     public void testFilterPositiveNarrowingProjectSemiJoin()
     {
         tester().assertStatsFor(pb -> {
-            Symbol a = pb.symbol("a", DOUBLE);
-            Symbol b = pb.symbol("b", DOUBLE);
-            Symbol c = pb.symbol("c", DOUBLE);
+            Symbol a = pb.symbol("a", BIGINT);
+            Symbol b = pb.symbol("b", BIGINT);
+            Symbol c = pb.symbol("c", BIGINT);
             Symbol semiJoinOutput = pb.symbol("sjo", BOOLEAN);
             return pb.filter(
                     new Reference(BOOLEAN, "sjo"),
@@ -140,19 +142,19 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
         })
                 .withSourceStats(LEFT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "a"), aStats)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "b"), bStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "a"), aStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "b"), bStats)
                         .build())
                 .withSourceStats(RIGHT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(2000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "c"), cStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "c"), cStats)
                         .build())
                 .check(check -> {
                     check.outputRowsCount(180)
                             .symbolStats("a", assertion -> assertion.isEqualTo(expectedAInC))
-                            .symbolStatsUnknown("b", DOUBLE)
-                            .symbolStatsUnknown("c", DOUBLE)
-                            .symbolStatsUnknown("sjo", DOUBLE);
+                            .symbolStatsUnknown("b")
+                            .symbolStatsUnknown("c")
+                            .symbolStatsUnknown("sjo");
                 });
     }
 
@@ -160,12 +162,12 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
     public void testFilterPositivePlusExtraConjunctSemiJoin()
     {
         tester().assertStatsFor(pb -> {
-            Symbol a = pb.symbol("a", DOUBLE);
-            Symbol b = pb.symbol("b", DOUBLE);
-            Symbol c = pb.symbol("c", DOUBLE);
+            Symbol a = pb.symbol("a", BIGINT);
+            Symbol b = pb.symbol("b", BIGINT);
+            Symbol c = pb.symbol("c", BIGINT);
             Symbol semiJoinOutput = pb.symbol("sjo", BOOLEAN);
             return pb.filter(
-                    new Logical(AND, ImmutableList.of(new Reference(BOOLEAN, "sjo"), new Comparison(LESS_THAN, new Reference(DOUBLE, "a"), new Constant(DOUBLE, 8.0)))),
+                    new Logical(AND, ImmutableList.of(new Reference(BOOLEAN, "sjo"), new Comparison(LESS_THAN, new Reference(INTEGER, "a"), new Constant(INTEGER, 8L)))),
                     pb.semiJoin(
                             pb.values(LEFT_SOURCE_ID, a, b),
                             pb.values(RIGHT_SOURCE_ID, c),
@@ -178,19 +180,19 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
         })
                 .withSourceStats(LEFT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "a"), aStats)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "b"), bStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "a"), aStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "b"), bStats)
                         .build())
                 .withSourceStats(RIGHT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(2000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "c"), cStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "c"), cStats)
                         .build())
                 .check(check -> {
                     check.outputRowsCount(144)
                             .symbolStats("a", assertion -> assertion.isEqualTo(expectedANotInC))
                             .symbolStats("b", assertion -> assertion.isEqualTo(bStats))
-                            .symbolStatsUnknown("c", DOUBLE)
-                            .symbolStatsUnknown("sjo", BOOLEAN);
+                            .symbolStatsUnknown("c")
+                            .symbolStatsUnknown("sjo");
                 });
     }
 
@@ -198,9 +200,9 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
     public void testFilterNegativeSemiJoin()
     {
         tester().assertStatsFor(pb -> {
-            Symbol a = pb.symbol("a", DOUBLE);
-            Symbol b = pb.symbol("b", DOUBLE);
-            Symbol c = pb.symbol("c", DOUBLE);
+            Symbol a = pb.symbol("a", BIGINT);
+            Symbol b = pb.symbol("b", BIGINT);
+            Symbol c = pb.symbol("c", BIGINT);
             Symbol semiJoinOutput = pb.symbol("sjo", BOOLEAN);
             return pb.filter(
                     new Not(new Reference(BOOLEAN, "sjo")),
@@ -216,19 +218,19 @@ public class TestSimpleFilterProjectSemiJoinStatsRule
         })
                 .withSourceStats(LEFT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(1000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "a"), aStats)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "b"), bStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "a"), aStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "b"), bStats)
                         .build())
                 .withSourceStats(RIGHT_SOURCE_ID, PlanNodeStatsEstimate.builder()
                         .setOutputRowCount(2000)
-                        .addSymbolStatistics(new Symbol(DOUBLE, "c"), cStats)
+                        .addSymbolStatistics(new Symbol(UNKNOWN, "c"), cStats)
                         .build())
                 .check(check -> {
                     check.outputRowsCount(720)
                             .symbolStats("a", assertion -> assertion.isEqualTo(expectedANotInCWithExtraFilter))
                             .symbolStats("b", assertion -> assertion.isEqualTo(bStats))
-                            .symbolStatsUnknown("c", DOUBLE)
-                            .symbolStatsUnknown("sjo", BOOLEAN);
+                            .symbolStatsUnknown("c")
+                            .symbolStatsUnknown("sjo");
                 });
     }
 }

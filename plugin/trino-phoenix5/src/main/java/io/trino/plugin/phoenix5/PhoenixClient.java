@@ -459,7 +459,7 @@ public class PhoenixClient
             return mapping;
         }
 
-        switch (typeHandle.jdbcType()) {
+        switch (typeHandle.getJdbcType()) {
             case Types.BOOLEAN:
                 return Optional.of(booleanColumnMapping());
 
@@ -482,9 +482,9 @@ public class PhoenixClient
                 return Optional.of(doubleColumnMapping());
 
             case Types.DECIMAL:
-                Optional<Integer> columnSize = typeHandle.columnSize();
+                Optional<Integer> columnSize = typeHandle.getColumnSize();
                 int precision = columnSize.orElse(DEFAULT_PRECISION);
-                int decimalDigits = typeHandle.decimalDigits().orElse(DEFAULT_SCALE);
+                int decimalDigits = typeHandle.getDecimalDigits().orElse(DEFAULT_SCALE);
                 if (getDecimalRounding(session) == ALLOW_OVERFLOW) {
                     if (columnSize.isEmpty()) {
                         return Optional.of(decimalColumnMapping(createDecimalType(Decimals.MAX_PRECISION, getDecimalDefaultScale(session)), getDecimalRoundingMode(session)));
@@ -498,16 +498,16 @@ public class PhoenixClient
                 return Optional.of(decimalColumnMapping(createDecimalType(precision, max(decimalDigits, 0)), UNNECESSARY));
 
             case Types.CHAR:
-                return Optional.of(defaultCharColumnMapping(typeHandle.requiredColumnSize(), true));
+                return Optional.of(defaultCharColumnMapping(typeHandle.getRequiredColumnSize(), true));
 
             case VARCHAR:
             case NVARCHAR:
             case LONGVARCHAR:
             case LONGNVARCHAR:
-                if (typeHandle.columnSize().isEmpty()) {
+                if (typeHandle.getColumnSize().isEmpty()) {
                     return Optional.of(varcharColumnMapping(createUnboundedVarcharType(), true));
                 }
-                return Optional.of(defaultVarcharColumnMapping(typeHandle.requiredColumnSize(), true));
+                return Optional.of(defaultVarcharColumnMapping(typeHandle.getRequiredColumnSize(), true));
 
             case Types.BINARY:
             case Types.VARBINARY:
@@ -530,18 +530,18 @@ public class PhoenixClient
 
             case ARRAY:
                 JdbcTypeHandle elementTypeHandle = getArrayElementTypeHandle(typeHandle);
-                if (elementTypeHandle.jdbcType() == Types.VARBINARY) {
+                if (elementTypeHandle.getJdbcType() == Types.VARBINARY) {
                     return Optional.empty();
                 }
                 return toColumnMapping(session, connection, elementTypeHandle)
                         .map(elementMapping -> {
                             ArrayType trinoArrayType = new ArrayType(elementMapping.getType());
-                            String jdbcTypeName = elementTypeHandle.jdbcTypeName()
+                            String jdbcTypeName = elementTypeHandle.getJdbcTypeName()
                                     .orElseThrow(() -> new TrinoException(
                                             PHOENIX_METADATA_ERROR,
-                                            "Type name is missing for jdbc type: " + JDBCType.valueOf(elementTypeHandle.jdbcType())));
+                                            "Type name is missing for jdbc type: " + JDBCType.valueOf(elementTypeHandle.getJdbcType())));
                             // TODO (https://github.com/trinodb/trino/issues/11132) Enable predicate pushdown on ARRAY(CHAR) type in Phoenix
-                            PredicatePushdownController pushdownController = elementTypeHandle.jdbcType() == Types.CHAR ? DISABLE_PUSHDOWN : FULL_PUSHDOWN;
+                            PredicatePushdownController pushdownController = elementTypeHandle.getJdbcType() == Types.CHAR ? DISABLE_PUSHDOWN : FULL_PUSHDOWN;
                             return arrayColumnMapping(session, trinoArrayType, jdbcTypeName, pushdownController);
                         });
         }
@@ -873,17 +873,17 @@ public class PhoenixClient
 
     private JdbcTypeHandle getArrayElementTypeHandle(JdbcTypeHandle arrayTypeHandle)
     {
-        String arrayTypeName = arrayTypeHandle.jdbcTypeName()
-                .orElseThrow(() -> new TrinoException(PHOENIX_METADATA_ERROR, "Type name is missing for jdbc type: " + JDBCType.valueOf(arrayTypeHandle.jdbcType())));
+        String arrayTypeName = arrayTypeHandle.getJdbcTypeName()
+                .orElseThrow(() -> new TrinoException(PHOENIX_METADATA_ERROR, "Type name is missing for jdbc type: " + JDBCType.valueOf(arrayTypeHandle.getJdbcType())));
         checkArgument(arrayTypeName.endsWith(" ARRAY"), "array type must end with ' ARRAY'");
         arrayTypeName = arrayTypeName.substring(0, arrayTypeName.length() - " ARRAY".length());
-        verify(arrayTypeHandle.caseSensitivity().isEmpty(), "Case sensitivity not supported");
+        verify(arrayTypeHandle.getCaseSensitivity().isEmpty(), "Case sensitivity not supported");
         return new JdbcTypeHandle(
                 PDataType.fromSqlTypeName(arrayTypeName).getSqlType(),
                 Optional.of(arrayTypeName),
-                arrayTypeHandle.columnSize(),
-                arrayTypeHandle.decimalDigits(),
-                Optional.empty(),
+                arrayTypeHandle.getColumnSize(),
+                arrayTypeHandle.getDecimalDigits(),
+                arrayTypeHandle.getArrayDimensions(),
                 Optional.empty());
     }
 

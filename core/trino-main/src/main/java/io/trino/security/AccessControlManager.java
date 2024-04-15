@@ -310,11 +310,11 @@ public class AccessControlManager
     }
 
     @Override
-    public void checkCanExecuteQuery(Identity identity, QueryId queryId)
+    public void checkCanExecuteQuery(Identity identity)
     {
         requireNonNull(identity, "identity is null");
 
-        systemAuthorizationCheck(control -> control.checkCanExecuteQuery(identity, queryId));
+        systemAuthorizationCheck(control -> control.checkCanExecuteQuery(identity));
     }
 
     @Override
@@ -1064,12 +1064,12 @@ public class AccessControlManager
     }
 
     @Override
-    public void checkCanSetSystemSessionProperty(Identity identity, QueryId queryId, String propertyName)
+    public void checkCanSetSystemSessionProperty(Identity identity, String propertyName)
     {
         requireNonNull(identity, "identity is null");
         requireNonNull(propertyName, "propertyName is null");
 
-        systemAuthorizationCheck(control -> control.checkCanSetSystemSessionProperty(identity, queryId, propertyName));
+        systemAuthorizationCheck(control -> control.checkCanSetSystemSessionProperty(identity, propertyName));
     }
 
     @Override

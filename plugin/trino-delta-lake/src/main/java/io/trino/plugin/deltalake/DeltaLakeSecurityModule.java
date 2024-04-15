@@ -30,11 +30,7 @@ public class DeltaLakeSecurityModule
 {
     public enum DeltaLakeSecurity
     {
-        ALLOW_ALL,
-        READ_ONLY,
-        FILE,
-        SYSTEM,
-        /**/
+        ALLOW_ALL, READ_ONLY, FILE, SYSTEM
     }
 
     @Override

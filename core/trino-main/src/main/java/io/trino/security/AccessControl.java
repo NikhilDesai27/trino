@@ -15,7 +15,6 @@ package io.trino.security;
 
 import com.google.common.collect.ImmutableList;
 import io.trino.metadata.QualifiedObjectName;
-import io.trino.spi.QueryId;
 import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.EntityKindAndName;
@@ -78,7 +77,7 @@ public interface AccessControl
      *
      * @throws AccessDeniedException if not allowed
      */
-    void checkCanExecuteQuery(Identity identity, QueryId queryId);
+    void checkCanExecuteQuery(Identity identity);
 
     /**
      * Checks if identity can view a query owned by the specified user.  The method
@@ -464,7 +463,7 @@ public interface AccessControl
      *
      * @throws AccessDeniedException if not allowed
      */
-    void checkCanSetSystemSessionProperty(Identity identity, QueryId queryId, String propertyName);
+    void checkCanSetSystemSessionProperty(Identity identity, String propertyName);
 
     /**
      * Check if identity is allowed to set the specified catalog property.

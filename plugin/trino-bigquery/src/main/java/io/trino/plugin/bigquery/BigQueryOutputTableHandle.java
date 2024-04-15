@@ -13,7 +13,8 @@
  */
 package io.trino.plugin.bigquery;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import io.trino.spi.connector.ConnectorOutputTableHandle;
 import io.trino.spi.type.Type;
@@ -24,29 +25,65 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
-public record BigQueryOutputTableHandle(
-        RemoteTableName remoteTableName,
-        List<String> columnNames,
-        List<Type> columnTypes,
-        Optional<String> temporaryTableName,
-        Optional<String> pageSinkIdColumnName)
+public class BigQueryOutputTableHandle
         implements ConnectorOutputTableHandle
 {
-    public BigQueryOutputTableHandle
+    private final RemoteTableName remoteTableName;
+    private final List<String> columnNames;
+    private final List<Type> columnTypes;
+    private final Optional<String> temporaryTableName;
+    private final Optional<String> pageSinkIdColumnName;
+
+    @JsonCreator
+    public BigQueryOutputTableHandle(
+            @JsonProperty("remoteTableName") RemoteTableName remoteTableName,
+            @JsonProperty("columnNames") List<String> columnNames,
+            @JsonProperty("columnTypes") List<Type> columnTypes,
+            @JsonProperty("temporaryTableName") Optional<String> temporaryTableName,
+            @JsonProperty("pageSinkIdColumnName") Optional<String> pageSinkIdColumnName)
     {
-        requireNonNull(remoteTableName, "remoteTableName is null");
-        columnNames = ImmutableList.copyOf(requireNonNull(columnNames, "columnNames is null"));
-        columnTypes = ImmutableList.copyOf(requireNonNull(columnTypes, "columnTypes is null"));
+        this.remoteTableName = requireNonNull(remoteTableName, "remoteTableName is null");
+        this.columnNames = ImmutableList.copyOf(requireNonNull(columnNames, "columnNames is null"));
+        this.columnTypes = ImmutableList.copyOf(requireNonNull(columnTypes, "columnTypes is null"));
         checkArgument(columnNames.size() == columnTypes.size(), "columnNames and columnTypes must have the same size");
-        requireNonNull(temporaryTableName, "temporaryTableName is null");
-        requireNonNull(pageSinkIdColumnName, "pageSinkIdColumnName is null");
+        this.temporaryTableName = requireNonNull(temporaryTableName, "temporaryTableName is null");
+        this.pageSinkIdColumnName = requireNonNull(pageSinkIdColumnName, "pageSinkIdColumnName is null");
         checkArgument(temporaryTableName.isPresent() == pageSinkIdColumnName.isPresent(),
                 "temporaryTableName.isPresent is not equal to pageSinkIdColumn.isPresent");
     }
 
-    @JsonIgnore
+    @JsonProperty
+    public RemoteTableName getRemoteTableName()
+    {
+        return remoteTableName;
+    }
+
+    @JsonProperty
+    public List<String> getColumnNames()
+    {
+        return columnNames;
+    }
+
+    @JsonProperty
+    public List<Type> getColumnTypes()
+    {
+        return columnTypes;
+    }
+
+    @JsonProperty
+    public Optional<String> getTemporaryTableName()
+    {
+        return temporaryTableName;
+    }
+
     public Optional<RemoteTableName> getTemporaryRemoteTableName()
     {
-        return temporaryTableName.map(tableName -> new RemoteTableName(remoteTableName.projectId(), remoteTableName.datasetName(), tableName));
+        return temporaryTableName.map(tableName -> new RemoteTableName(remoteTableName.getProjectId(), remoteTableName.getDatasetName(), tableName));
+    }
+
+    @JsonProperty
+    public Optional<String> getPageSinkIdColumnName()
+    {
+        return pageSinkIdColumnName;
     }
 }

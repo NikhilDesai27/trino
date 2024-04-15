@@ -55,6 +55,7 @@ import static io.trino.sql.planner.plan.TopNNode.Step.PARTIAL;
  *       - right source
  * </pre>
  * <p>
+ * <p>
  * TODO: this Rule violates the expectation that Rule transformations must preserve the semantics of the
  * expression subtree. It works only because it's a PARTIAL TopN, so there will be a FINAL TopN that "fixes" it.
  */
@@ -79,7 +80,7 @@ public class PushTopNThroughOuterJoin
     {
         JoinNode joinNode = captures.get(JOIN_CHILD);
 
-        List<Symbol> orderBySymbols = parent.getOrderingScheme().orderBy();
+        List<Symbol> orderBySymbols = parent.getOrderingScheme().getOrderBy();
 
         PlanNode left = joinNode.getLeft();
         PlanNode right = joinNode.getRight();

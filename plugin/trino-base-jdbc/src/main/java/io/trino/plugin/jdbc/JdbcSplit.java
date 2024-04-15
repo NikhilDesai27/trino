@@ -15,12 +15,10 @@ package io.trino.plugin.jdbc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableMap;
 import io.airlift.slice.SizeOf;
 import io.trino.spi.connector.ConnectorSplit;
 import io.trino.spi.predicate.TupleDomain;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static io.airlift.slice.SizeOf.instanceSize;
@@ -67,11 +65,9 @@ public class JdbcSplit
     }
 
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return additionalPredicate
-                .map(value -> ImmutableMap.of("additionalPredicate", value))
-                .orElseGet(ImmutableMap::of);
+        return this;
     }
 
     @Override

@@ -82,7 +82,7 @@ public class TestPruneWindowColumns
     public void testWindowNotNeeded()
     {
         tester().assertThat(new PruneWindowColumns())
-                .on(p -> buildProjectedWindow(p, symbol -> inputSymbolNameSet.contains(symbol.name()), alwaysTrue()))
+                .on(p -> buildProjectedWindow(p, symbol -> inputSymbolNameSet.contains(symbol.getName()), alwaysTrue()))
                 .matches(
                         strictProject(
                                 Maps.asMap(inputSymbolNameSet, symbol -> expression(new Reference(BIGINT, symbol))),
@@ -94,7 +94,7 @@ public class TestPruneWindowColumns
     {
         tester().assertThat(new PruneWindowColumns())
                 .on(p -> buildProjectedWindow(p,
-                        symbol -> symbol.name().equals("output2") || symbol.name().equals("unused"),
+                        symbol -> symbol.getName().equals("output2") || symbol.getName().equals("unused"),
                         alwaysTrue()))
                 .matches(
                         strictProject(
@@ -133,9 +133,9 @@ public class TestPruneWindowColumns
                 .on(p -> buildProjectedWindow(
                         p,
                         // only the window function outputs
-                        symbol -> !inputSymbolNameSet.contains(symbol.name()),
+                        symbol -> !inputSymbolNameSet.contains(symbol.getName()),
                         // only the used input symbols
-                        symbol -> !symbol.name().equals("unused")))
+                        symbol -> !symbol.getName().equals("unused")))
                 .doesNotFire();
     }
 
@@ -146,7 +146,7 @@ public class TestPruneWindowColumns
                 .on(p -> buildProjectedWindow(
                         p,
                         // only the window function outputs
-                        symbol -> !inputSymbolNameSet.contains(symbol.name()),
+                        symbol -> !inputSymbolNameSet.contains(symbol.getName()),
                         alwaysTrue()))
                 .matches(
                         strictProject(

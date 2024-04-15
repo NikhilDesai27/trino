@@ -527,7 +527,7 @@ public class PostgreSqlClient
     @Override
     public Optional<ColumnMapping> toColumnMapping(ConnectorSession session, Connection connection, JdbcTypeHandle typeHandle)
     {
-        String jdbcTypeName = typeHandle.jdbcTypeName()
+        String jdbcTypeName = typeHandle.getJdbcTypeName()
                 .orElseThrow(() -> new TrinoException(JDBC_ERROR, "Type name is missing: " + typeHandle));
 
         Optional<ColumnMapping> mapping = getForcedMappingToVarchar(typeHandle);
@@ -544,13 +544,13 @@ public class PostgreSqlClient
                 return Optional.of(jsonColumnMapping());
             case "timestamptz":
                 // PostgreSQL's "timestamp with time zone" is reported as Types.TIMESTAMP rather than Types.TIMESTAMP_WITH_TIMEZONE
-                int decimalDigits = typeHandle.requiredDecimalDigits();
+                int decimalDigits = typeHandle.getRequiredDecimalDigits();
                 return Optional.of(timestampWithTimeZoneColumnMapping(decimalDigits));
             case "hstore":
                 return Optional.of(hstoreColumnMapping(session));
         }
 
-        switch (typeHandle.jdbcType()) {
+        switch (typeHandle.getJdbcType()) {
             case Types.BIT:
                 return Optional.of(booleanColumnMapping());
 
@@ -570,9 +570,9 @@ public class PostgreSqlClient
                 return Optional.of(doubleColumnMapping());
 
             case Types.NUMERIC: {
-                int columnSize = typeHandle.requiredColumnSize();
+                int columnSize = typeHandle.getRequiredColumnSize();
                 int precision;
-                int decimalDigits = typeHandle.decimalDigits().orElse(0);
+                int decimalDigits = typeHandle.getDecimalDigits().orElse(0);
                 if (getDecimalRounding(session) == ALLOW_OVERFLOW) {
                     if (columnSize == PRECISION_OF_UNSPECIFIED_DECIMAL) {
                         // decimal type with unspecified scale - up to 131072 digits before the decimal point; up to 16383 digits after the decimal point)
@@ -592,14 +592,14 @@ public class PostgreSqlClient
             }
 
             case Types.CHAR:
-                return Optional.of(charColumnMapping(typeHandle.requiredColumnSize()));
+                return Optional.of(charColumnMapping(typeHandle.getRequiredColumnSize()));
 
             case Types.VARCHAR:
                 if (!jdbcTypeName.equals("varchar")) {
                     // This can be e.g. an ENUM
                     return Optional.of(typedVarcharColumnMapping(jdbcTypeName));
                 }
-                return Optional.of(varcharColumnMapping(typeHandle.requiredColumnSize()));
+                return Optional.of(varcharColumnMapping(typeHandle.getRequiredColumnSize()));
 
             case Types.BINARY:
                 return Optional.of(varbinaryColumnMapping());
@@ -608,10 +608,10 @@ public class PostgreSqlClient
                 return Optional.of(dateColumnMappingUsingLocalDate());
 
             case Types.TIME:
-                return Optional.of(timeColumnMapping(typeHandle.requiredDecimalDigits()));
+                return Optional.of(timeColumnMapping(typeHandle.getRequiredDecimalDigits()));
 
             case Types.TIMESTAMP:
-                TimestampType timestampType = createTimestampType(typeHandle.requiredDecimalDigits());
+                TimestampType timestampType = createTimestampType(typeHandle.getRequiredDecimalDigits());
                 return Optional.of(ColumnMapping.longMapping(
                         timestampType,
                         timestampReadFunction(timestampType),
@@ -634,7 +634,7 @@ public class PostgreSqlClient
 
     private Optional<ColumnMapping> arrayToTrinoType(ConnectorSession session, Connection connection, JdbcTypeHandle typeHandle)
     {
-        checkArgument(typeHandle.jdbcType() == Types.ARRAY, "Not array type");
+        checkArgument(typeHandle.getJdbcType() == Types.ARRAY, "Not array type");
 
         ArrayMapping arrayMapping = getArrayMapping(session);
         if (arrayMapping == DISABLED) {
@@ -642,9 +642,9 @@ public class PostgreSqlClient
         }
         // resolve and map base array element type
         JdbcTypeHandle baseElementTypeHandle = getArrayElementTypeHandle(connection, typeHandle);
-        String baseElementTypeName = baseElementTypeHandle.jdbcTypeName()
+        String baseElementTypeName = baseElementTypeHandle.getJdbcTypeName()
                 .orElseThrow(() -> new TrinoException(JDBC_ERROR, "Element type name is missing: " + baseElementTypeHandle));
-        if (baseElementTypeHandle.jdbcType() == Types.BINARY) {
+        if (baseElementTypeHandle.getJdbcType() == Types.BINARY) {
             // PostgreSQL jdbc driver doesn't currently support array of varbinary (bytea[])
             // https://github.com/pgjdbc/pgjdbc/pull/1184
             return Optional.empty();
@@ -652,7 +652,7 @@ public class PostgreSqlClient
         Optional<ColumnMapping> baseElementMapping = toColumnMapping(session, connection, baseElementTypeHandle);
 
         if (arrayMapping == AS_ARRAY) {
-            if (typeHandle.arrayDimensions().isEmpty()) {
+            if (typeHandle.getArrayDimensions().isEmpty()) {
                 return Optional.empty();
             }
             return baseElementMapping
@@ -660,7 +660,7 @@ public class PostgreSqlClient
                         ArrayType trinoArrayType = new ArrayType(elementMapping.getType());
                         ColumnMapping arrayColumnMapping = arrayColumnMapping(session, trinoArrayType, elementMapping, baseElementTypeName);
 
-                        int arrayDimensions = typeHandle.arrayDimensions().get();
+                        int arrayDimensions = typeHandle.getArrayDimensions().get();
                         for (int i = 1; i < arrayDimensions; i++) {
                             trinoArrayType = new ArrayType(trinoArrayType);
                             arrayColumnMapping = arrayColumnMapping(session, trinoArrayType, arrayColumnMapping, baseElementTypeName);
@@ -809,9 +809,9 @@ public class PostgreSqlClient
     public boolean supportsTopN(ConnectorSession session, JdbcTableHandle handle, List<JdbcSortItem> sortOrder)
     {
         for (JdbcSortItem sortItem : sortOrder) {
-            Type sortItemType = sortItem.column().getColumnType();
+            Type sortItemType = sortItem.getColumn().getColumnType();
             if (sortItemType instanceof CharType || sortItemType instanceof VarcharType) {
-                if (!isCollatable(sortItem.column())) {
+                if (!isCollatable(sortItem.getColumn())) {
                     return false;
                 }
             }
@@ -825,13 +825,13 @@ public class PostgreSqlClient
         return Optional.of((query, sortItems, limit) -> {
             String orderBy = sortItems.stream()
                     .map(sortItem -> {
-                        String ordering = sortItem.sortOrder().isAscending() ? "ASC" : "DESC";
-                        String nullsHandling = sortItem.sortOrder().isNullsFirst() ? "NULLS FIRST" : "NULLS LAST";
+                        String ordering = sortItem.getSortOrder().isAscending() ? "ASC" : "DESC";
+                        String nullsHandling = sortItem.getSortOrder().isNullsFirst() ? "NULLS FIRST" : "NULLS LAST";
                         String collation = "";
-                        if (isCollatable(sortItem.column())) {
+                        if (isCollatable(sortItem.getColumn())) {
                             collation = "COLLATE \"C\"";
                         }
-                        return format("%s %s %s %s", quoted(sortItem.column().getColumnName()), collation, ordering, nullsHandling);
+                        return format("%s %s %s %s", quoted(sortItem.getColumn().getColumnName()), collation, ordering, nullsHandling);
                     })
                     .collect(joining(", "));
             return format("%s ORDER BY %s LIMIT %d", query, orderBy, limit);
@@ -841,7 +841,7 @@ public class PostgreSqlClient
     protected static boolean isCollatable(JdbcColumnHandle column)
     {
         if (column.getColumnType() instanceof CharType || column.getColumnType() instanceof VarcharType) {
-            String jdbcTypeName = column.getJdbcTypeHandle().jdbcTypeName()
+            String jdbcTypeName = column.getJdbcTypeHandle().getJdbcTypeName()
                     .orElseThrow(() -> new TrinoException(JDBC_ERROR, "Type name is missing: " + column.getJdbcTypeHandle()));
             return isCollatable(jdbcTypeName);
         }
@@ -1463,18 +1463,18 @@ public class PostgreSqlClient
 
     private static JdbcTypeHandle getArrayElementTypeHandle(Connection connection, JdbcTypeHandle arrayTypeHandle)
     {
-        String jdbcTypeName = arrayTypeHandle.jdbcTypeName()
+        String jdbcTypeName = arrayTypeHandle.getJdbcTypeName()
                 .orElseThrow(() -> new TrinoException(JDBC_ERROR, "Type name is missing: " + arrayTypeHandle));
         try {
             TypeInfo typeInfo = connection.unwrap(PgConnection.class).getTypeInfo();
             int pgElementOid = typeInfo.getPGArrayElement(typeInfo.getPGType(jdbcTypeName));
-            verify(arrayTypeHandle.caseSensitivity().isEmpty(), "Case sensitivity not supported");
+            verify(arrayTypeHandle.getCaseSensitivity().isEmpty(), "Case sensitivity not supported");
             return new JdbcTypeHandle(
                     typeInfo.getSQLType(pgElementOid),
                     Optional.of(typeInfo.getPGType(pgElementOid)),
-                    arrayTypeHandle.columnSize(),
-                    arrayTypeHandle.decimalDigits(),
-                    Optional.empty(),
+                    arrayTypeHandle.getColumnSize(),
+                    arrayTypeHandle.getDecimalDigits(),
+                    arrayTypeHandle.getArrayDimensions(),
                     Optional.empty());
         }
         catch (SQLException e) {

@@ -78,7 +78,7 @@ public class TestValuesNodeStats
                         PlanNodeStatsEstimate.builder()
                                 .setOutputRowCount(4)
                                 .addSymbolStatistics(
-                                        new Symbol(createVarcharType(30), "v"),
+                                        new Symbol(UNKNOWN, "v"),
                                         SymbolStatsEstimate.builder()
                                                 .setNullsFraction(0.25)
                                                 .setDistinctValuesCount(3)
@@ -101,13 +101,25 @@ public class TestValuesNodeStats
     {
         PlanNodeStatsEstimate nullAStats = PlanNodeStatsEstimate.builder()
                 .setOutputRowCount(1)
-                .addSymbolStatistics(new Symbol(DOUBLE, "a"), SymbolStatsEstimate.zero())
+                .addSymbolStatistics(new Symbol(INTEGER, "a"), SymbolStatsEstimate.zero())
                 .build();
 
         tester().assertStatsFor(pb -> pb
-                        .values(ImmutableList.of(pb.symbol("a", DOUBLE)),
+                        .values(ImmutableList.of(pb.symbol("a", BIGINT)),
                                 ImmutableList.of(
-                                        ImmutableList.of(new Constant(DOUBLE, null)))))
+                                        ImmutableList.of(new Constant(INTEGER, null)))))
+                .check(outputStats -> outputStats.equalTo(nullAStats));
+
+        tester().assertStatsFor(pb -> pb
+                        .values(ImmutableList.of(pb.symbol("a", BIGINT)),
+                                ImmutableList.of(
+                                        ImmutableList.of(new Constant(BIGINT, null)))))
+                .check(outputStats -> outputStats.equalTo(nullAStats));
+
+        tester().assertStatsFor(pb -> pb
+                        .values(ImmutableList.of(pb.symbol("a", UNKNOWN)),
+                                ImmutableList.of(
+                                        ImmutableList.of(new Constant(UNKNOWN, null)))))
                 .check(outputStats -> outputStats.equalTo(nullAStats));
     }
 
@@ -120,7 +132,7 @@ public class TestValuesNodeStats
                 .check(outputStats -> outputStats.equalTo(
                         PlanNodeStatsEstimate.builder()
                                 .setOutputRowCount(0)
-                                .addSymbolStatistics(new Symbol(BIGINT, "a"), SymbolStatsEstimate.zero())
+                                .addSymbolStatistics(new Symbol(UNKNOWN, "a"), SymbolStatsEstimate.zero())
                                 .build()));
     }
 }

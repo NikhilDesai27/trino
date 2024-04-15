@@ -71,8 +71,8 @@ public final class RedisTestUtils
         RedisTableDescription tableDescription = new RedisTableDescription(
                 schemaTableName.getTableName(),
                 schemaTableName.getSchemaName(),
-                tpchTemplate.key(),
-                tpchTemplate.value());
+                tpchTemplate.getKey(),
+                tpchTemplate.getValue());
 
         return new AbstractMap.SimpleImmutableEntry<>(schemaTableName, tableDescription);
     }
@@ -80,8 +80,8 @@ public final class RedisTestUtils
     public static Map.Entry<SchemaTableName, RedisTableDescription> createTableDescription(RedisTableDescription tableDescription)
     {
         SchemaTableName schemaTableName = new SchemaTableName(
-                tableDescription.schemaName(),
-                tableDescription.tableName());
+                tableDescription.getSchemaName(),
+                tableDescription.getTableName());
 
         return new AbstractMap.SimpleImmutableEntry<>(schemaTableName, tableDescription);
     }

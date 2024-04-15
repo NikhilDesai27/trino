@@ -59,7 +59,7 @@ public class ElasticsearchPageSourceProvider
         ElasticsearchTableHandle elasticsearchTable = (ElasticsearchTableHandle) table;
         ElasticsearchSplit elasticsearchSplit = (ElasticsearchSplit) split;
 
-        if (elasticsearchTable.type().equals(QUERY)) {
+        if (elasticsearchTable.getType().equals(QUERY)) {
             return new PassthroughQueryPageSource(client, elasticsearchTable);
         }
 

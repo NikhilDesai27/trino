@@ -332,6 +332,7 @@ public class TestIcebergGlueCatalogAccessOperations
                     "SELECT name FROM system.metadata.materialized_views WHERE catalog_name = CURRENT_CATALOG AND schema_name = CURRENT_SCHEMA",
                     ImmutableMultiset.builder()
                             .add(GET_TABLES)
+                            .add(GET_TABLE)
                             .build());
 
             // getting relations with their types, like some tools do
@@ -344,6 +345,7 @@ public class TestIcebergGlueCatalogAccessOperations
                             """,
                     ImmutableMultiset.builder()
                             .addCopies(GET_TABLES, 2)
+                            .add(GET_TABLE)
                             .build());
         }
         finally {

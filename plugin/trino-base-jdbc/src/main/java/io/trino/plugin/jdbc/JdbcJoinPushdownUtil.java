@@ -127,7 +127,7 @@ public final class JdbcJoinPushdownUtil
             PreparedQuery leftSource,
             PreparedQuery rightSource)
     {
-        return format("%s JOIN(%s; %s)", joinType, leftSource.query(), rightSource.query());
+        return format("%s JOIN(%s; %s)", joinType, leftSource.getQuery(), rightSource.getQuery());
     }
 
     private static void logNoPushdown(String joinSignature, String reason)

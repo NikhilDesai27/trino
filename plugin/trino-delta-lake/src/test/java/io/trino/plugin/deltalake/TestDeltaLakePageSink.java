@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -175,8 +174,6 @@ public class TestDeltaLakePageSink
                 schemaString,
                 NONE,
                 OptionalInt.empty(),
-                false,
-                OptionalLong.empty(),
                 new ProtocolEntry(DEFAULT_READER_VERSION, DEFAULT_WRITER_VERSION, Optional.empty(), Optional.empty()));
 
         DeltaLakePageSinkProvider provider = new DeltaLakePageSinkProvider(

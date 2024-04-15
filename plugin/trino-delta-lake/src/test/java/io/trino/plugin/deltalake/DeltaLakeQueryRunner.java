@@ -74,7 +74,7 @@ public final class DeltaLakeQueryRunner
     public static class Builder
             extends DistributedQueryRunner.Builder<Builder>
     {
-        private String catalogName = DELTA_CATALOG;
+        private String catalogName;
         private ImmutableMap.Builder<String, String> deltaProperties = ImmutableMap.builder();
 
         protected Builder()
@@ -268,6 +268,7 @@ public final class DeltaLakeQueryRunner
             copyTpchTables(queryRunner, "tpch", TINY_SCHEMA_NAME, createSession(), TpchTable.getTables());
             log.info("Data directory is: %s", metastoreDirectory);
 
+            Thread.sleep(10);
             Logger log = Logger.get(DeltaLakeQueryRunner.class);
             log.info("======== SERVER STARTED ========");
             log.info("\n====\n%s\n====", queryRunner.getCoordinator().getBaseUrl());
@@ -281,6 +282,7 @@ public final class DeltaLakeQueryRunner
         {
             // Please set Delta Lake connector properties via VM options. e.g. -Dhive.metastore=glue -D..
             QueryRunner queryRunner = builder()
+                    .setCatalogName(DELTA_CATALOG)
                     .setExtraProperties(ImmutableMap.of("http-server.http.port", "8080"))
                     .build();
 
@@ -312,6 +314,7 @@ public final class DeltaLakeQueryRunner
             queryRunner.execute("CREATE SCHEMA tpch WITH (location='s3://" + bucketName + "/tpch')");
             copyTpchTables(queryRunner, "tpch", TINY_SCHEMA_NAME, createSession(), TpchTable.getTables());
 
+            Thread.sleep(10);
             Logger log = Logger.get(DeltaLakeQueryRunner.class);
             log.info("======== SERVER STARTED ========");
             log.info("\n====\n%s\n====", queryRunner.getCoordinator().getBaseUrl());

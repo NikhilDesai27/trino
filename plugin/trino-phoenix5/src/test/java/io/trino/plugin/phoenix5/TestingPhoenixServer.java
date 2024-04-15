@@ -13,6 +13,7 @@
  */
 package io.trino.plugin.phoenix5;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 import io.airlift.log.Logger;
 import io.trino.testing.ResourcePresence;
 import io.trino.testing.SharedResource;
@@ -36,6 +37,7 @@ public final class TestingPhoenixServer
 {
     private static final Logger LOG = Logger.get(TestingPhoenixServer.class);
 
+    @GuardedBy("this")
     private static final SharedResource<TestingPhoenixServer> sharedResource = new SharedResource<>(TestingPhoenixServer::new);
 
     public static synchronized SharedResource.Lease<TestingPhoenixServer> getInstance()

@@ -62,18 +62,18 @@ import static io.trino.sql.planner.plan.Patterns.join;
  * perspective of the transformed plan.
  * <p>
  * Transforms:
- * <pre>{@code
+ * <pre>
  * - join (on true), layout: (a, b, c)
  *    - source (a)
  *    - values
  *      b <- expr1
  *      c <- expr2
- * }</pre>
+ * </pre>
  * into:
- * <pre>{@code
+ * <pre>
  * - project (a <- a, b <- expr1, c <- expr2)
  *     - source (a)
- * }</pre>
+ * </pre>
  */
 public class ReplaceJoinOverConstantWithProject
         implements Rule<JoinNode>

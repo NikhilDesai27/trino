@@ -76,10 +76,9 @@ public class QueryIdGenerator
     /**
      * Generate next queryId using the following format:
      * {@code YYYYMMDD_hhmmss_index_coordId}
-     * <ul>
-     * <li>{@code index} rolls at the start of every day or when it is close to reaching {@code 99,999}.</li>
-     * <li>{@code coordId} is a randomly generated when this instance is created.</li>
-     * </ul>
+     * <p/>
+     * {@code index} rolls at the start of every day or when it is close to reaching {@code 99,999}.
+     * {@code coordId} is a randomly generated when this instance is created.
      */
     public synchronized QueryId createNextQueryId()
     {

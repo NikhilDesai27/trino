@@ -32,7 +32,7 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Memory Layout:
- * <pre>{@code
+ * <pre>
  *                    +----------------------+
  *                    |PeerGroupLookup       |
  *                    +----------------------+
@@ -53,7 +53,7 @@ import static java.util.Objects.requireNonNull;
  *                    |HeapSize2           |      |RightChild2    |    +---------------+
  *                    |...                 |      |...            |
  *                    +--------------------+      +---------------+
- * }</pre>
+ * </pre>
  */
 public class GroupedTopNRankAccumulator
 {

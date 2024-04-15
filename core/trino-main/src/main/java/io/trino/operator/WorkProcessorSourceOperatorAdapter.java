@@ -24,7 +24,6 @@ import io.trino.sql.planner.plan.PlanNodeId;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Map;
 
 import static io.trino.operator.WorkProcessor.ProcessState.blocked;
 import static io.trino.operator.WorkProcessor.ProcessState.finished;
@@ -85,8 +84,8 @@ public class WorkProcessorSourceOperatorAdapter
             return;
         }
 
-        Map<String, String> splitInfo = split.getInfo();
-        if (!splitInfo.isEmpty()) {
+        Object splitInfo = split.getInfo();
+        if (splitInfo != null) {
             operatorContext.setInfoSupplier(Suppliers.ofInstance(new SplitOperatorInfo(split.getCatalogHandle(), splitInfo)));
         }
 

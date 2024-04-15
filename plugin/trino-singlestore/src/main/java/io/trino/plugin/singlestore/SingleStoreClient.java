@@ -267,7 +267,7 @@ public class SingleStoreClient
     @Override
     public Optional<ColumnMapping> toColumnMapping(ConnectorSession session, Connection connection, JdbcTypeHandle typeHandle)
     {
-        String jdbcTypeName = typeHandle.jdbcTypeName()
+        String jdbcTypeName = typeHandle.getJdbcTypeName()
                 .orElseThrow(() -> new TrinoException(JDBC_ERROR, "Type name is missing: " + typeHandle));
 
         Optional<ColumnMapping> mapping = getForcedMappingToVarchar(typeHandle);
@@ -283,7 +283,7 @@ public class SingleStoreClient
             return Optional.of(jsonColumnMapping());
         }
 
-        switch (typeHandle.jdbcType()) {
+        switch (typeHandle.getJdbcType()) {
             case Types.BIT:
             case Types.BOOLEAN:
                 return Optional.of(booleanColumnMapping());
@@ -307,13 +307,13 @@ public class SingleStoreClient
                 return Optional.of(doubleColumnMapping());
             case Types.CHAR:
             case Types.NCHAR: // TODO it it is dummy copied from StandardColumnMappings, verify if it is proper mapping
-                return Optional.of(defaultCharColumnMapping(typeHandle.requiredColumnSize(), false));
+                return Optional.of(defaultCharColumnMapping(typeHandle.getRequiredColumnSize(), false));
             case Types.VARCHAR:
             case Types.LONGVARCHAR:
-                return Optional.of(checkNullUsingBytes(defaultVarcharColumnMapping(typeHandle.requiredColumnSize(), false)));
+                return Optional.of(checkNullUsingBytes(defaultVarcharColumnMapping(typeHandle.getRequiredColumnSize(), false)));
             case Types.DECIMAL:
-                int precision = typeHandle.requiredColumnSize();
-                int decimalDigits = typeHandle.requiredDecimalDigits();
+                int precision = typeHandle.getRequiredColumnSize();
+                int decimalDigits = typeHandle.getRequiredDecimalDigits();
                 if (getDecimalRounding(session) == ALLOW_OVERFLOW && precision > Decimals.MAX_PRECISION) {
                     int scale = min(decimalDigits, getDecimalDefaultScale(session));
                     return Optional.of(decimalColumnMapping(createDecimalType(Decimals.MAX_PRECISION, scale), getDecimalRoundingMode(session)));
@@ -332,14 +332,14 @@ public class SingleStoreClient
                         dateReadFunctionUsingLocalDate(),
                         dateWriteFunction()));
             case Types.TIME:
-                TimeType timeType = createTimeType(getTimePrecision(typeHandle.requiredColumnSize()));
+                TimeType timeType = createTimeType(getTimePrecision(typeHandle.getRequiredColumnSize()));
                 return Optional.of(ColumnMapping.longMapping(
                         timeType,
                         singleStoreTimeReadFunction(timeType),
                         timeWriteFunction(timeType.getPrecision())));
             case Types.TIMESTAMP:
                 // TODO (https://github.com/trinodb/trino/issues/5450) Fix DST handling
-                TimestampType timestampType = createTimestampType(getTimestampPrecision(typeHandle.requiredColumnSize()));
+                TimestampType timestampType = createTimestampType(getTimestampPrecision(typeHandle.getRequiredColumnSize()));
                 return Optional.of(timestampColumnMapping(timestampType));
         }
 
@@ -558,7 +558,7 @@ public class SingleStoreClient
     public boolean supportsTopN(ConnectorSession session, JdbcTableHandle handle, List<JdbcSortItem> sortOrder)
     {
         for (JdbcSortItem sortItem : sortOrder) {
-            Type sortItemType = sortItem.column().getColumnType();
+            Type sortItemType = sortItem.getColumn().getColumnType();
             if (sortItemType instanceof CharType || sortItemType instanceof VarcharType) {
                 // Remote database can be case insensitive.
                 return false;
@@ -573,10 +573,10 @@ public class SingleStoreClient
         return Optional.of((query, sortItems, limit) -> {
             String orderBy = sortItems.stream()
                     .flatMap(sortItem -> {
-                        String ordering = sortItem.sortOrder().isAscending() ? "ASC" : "DESC";
-                        String columnSorting = format("%s %s", quoted(sortItem.column().getColumnName()), ordering);
+                        String ordering = sortItem.getSortOrder().isAscending() ? "ASC" : "DESC";
+                        String columnSorting = format("%s %s", quoted(sortItem.getColumn().getColumnName()), ordering);
 
-                        switch (sortItem.sortOrder()) {
+                        switch (sortItem.getSortOrder()) {
                             case ASC_NULLS_FIRST:
                                 // In SingleStore ASC implies NULLS FIRST
                             case DESC_NULLS_LAST:
@@ -585,14 +585,14 @@ public class SingleStoreClient
 
                             case ASC_NULLS_LAST:
                                 return Stream.of(
-                                        format("ISNULL(%s) ASC", quoted(sortItem.column().getColumnName())),
+                                        format("ISNULL(%s) ASC", quoted(sortItem.getColumn().getColumnName())),
                                         columnSorting);
                             case DESC_NULLS_FIRST:
                                 return Stream.of(
-                                        format("ISNULL(%s) DESC", quoted(sortItem.column().getColumnName())),
+                                        format("ISNULL(%s) DESC", quoted(sortItem.getColumn().getColumnName())),
                                         columnSorting);
                         }
-                        throw new UnsupportedOperationException("Unsupported sort order: " + sortItem.sortOrder());
+                        throw new UnsupportedOperationException("Unsupported sort order: " + sortItem.getSortOrder());
                     })
                     .collect(joining(", "));
             return format("%s ORDER BY %s LIMIT %s", query, orderBy, limit);
@@ -663,13 +663,13 @@ public class SingleStoreClient
 
     private static Optional<ColumnMapping> getUnsignedMapping(JdbcTypeHandle typeHandle)
     {
-        if (typeHandle.jdbcTypeName().isEmpty()) {
+        if (typeHandle.getJdbcTypeName().isEmpty()) {
             return Optional.empty();
         }
 
-        String typeName = typeHandle.jdbcTypeName().get();
+        String typeName = typeHandle.getJdbcTypeName().get();
         if (UNSIGNED_TYPE_REGEX.matcher(typeName).matches()) {
-            switch (typeHandle.jdbcType()) {
+            switch (typeHandle.getJdbcType()) {
                 case Types.BIT:
                     return Optional.of(booleanColumnMapping());
 

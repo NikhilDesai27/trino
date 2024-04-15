@@ -631,7 +631,7 @@ class Query
         return Futures.transformAsync(queryManager.getStateChange(queryId, currentState), this::queryDoneFuture, directExecutor());
     }
 
-    private URI createNextResultsUri(UriInfo uriInfo, long nextToken)
+    private synchronized URI createNextResultsUri(UriInfo uriInfo, long nextToken)
     {
         return uriInfo.getBaseUriBuilder()
                 .replacePath("/v1/statement/executing")

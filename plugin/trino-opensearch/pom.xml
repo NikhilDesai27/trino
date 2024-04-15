@@ -144,6 +144,12 @@
             <groupId>org.opensearch</groupId>
             <artifactId>opensearch</artifactId>
             <version>${dep.opensearch.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hdrhistogram</groupId>
+                    <artifactId>HdrHistogram</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -156,6 +162,12 @@
             <groupId>org.opensearch</groupId>
             <artifactId>opensearch-core</artifactId>
             <version>${dep.opensearch.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hdrhistogram</groupId>
+                    <artifactId>HdrHistogram</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -174,6 +186,12 @@
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
             <version>${dep.opensearch.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hdrhistogram</groupId>
+                    <artifactId>HdrHistogram</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

@@ -33,6 +33,11 @@ public final class KeyEncoderAccessor
         return KeyEncoder.decodePrimaryKey(schema, key);
     }
 
+    public static byte[] encodeRangePartitionKey(PartialRow row, PartitionSchema.RangeSchema rangeSchema)
+    {
+        return KeyEncoder.encodeRangePartitionKey(row, rangeSchema);
+    }
+
     public static PartialRow decodeRangePartitionKey(Schema schema, PartitionSchema partitionSchema, byte[] key)
     {
         return KeyEncoder.decodeRangePartitionKey(schema, partitionSchema, key);

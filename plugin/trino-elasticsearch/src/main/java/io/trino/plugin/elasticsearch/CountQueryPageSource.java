@@ -41,13 +41,13 @@ class CountQueryPageSource
 
         long start = System.nanoTime();
         long count = client.count(
-                split.index(),
-                split.shard(),
-                buildSearchQuery(table.constraint().transformKeys(ElasticsearchColumnHandle.class::cast), table.query(), table.regexes()));
+                split.getIndex(),
+                split.getShard(),
+                buildSearchQuery(table.getConstraint().transformKeys(ElasticsearchColumnHandle.class::cast), table.getQuery(), table.getRegexes()));
         readTimeNanos = System.nanoTime() - start;
 
-        if (table.limit().isPresent()) {
-            count = Math.min(table.limit().getAsLong(), count);
+        if (table.getLimit().isPresent()) {
+            count = Math.min(table.getLimit().getAsLong(), count);
         }
 
         remaining = count;

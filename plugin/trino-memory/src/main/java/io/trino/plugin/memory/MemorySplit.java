@@ -16,12 +16,10 @@ package io.trino.plugin.memory;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.trino.spi.HostAddress;
 import io.trino.spi.connector.ConnectorSplit;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalLong;
 
@@ -83,9 +81,9 @@ public class MemorySplit
     }
 
     @Override
-    public Map<String, String> getSplitInfo()
+    public Object getInfo()
     {
-        return ImmutableMap.of("table", String.valueOf(table), "partNumber", String.valueOf(partNumber), "address", address.toString());
+        return this;
     }
 
     @Override

@@ -73,7 +73,6 @@ public class TestDefaultJdbcMetadata
         database = new TestingDatabase();
         metadata = new DefaultJdbcMetadata(new GroupingSetsEnabledJdbcClient(database.getJdbcClient(),
                 Optional.empty()),
-                TimestampTimeZoneDomain.ANY,
                 false,
                 ImmutableSet.of());
         tableHandle = metadata.getTableHandle(SESSION, new SchemaTableName("example", "numbers"));
@@ -84,7 +83,6 @@ public class TestDefaultJdbcMetadata
     {
         metadata = new DefaultJdbcMetadata(new GroupingSetsEnabledJdbcClient(database.getJdbcClient(),
                 Optional.of(false)),
-                TimestampTimeZoneDomain.ANY,
                 false,
                 ImmutableSet.of());
         ConnectorTableMetadata tableMetadata = new ConnectorTableMetadata(new SchemaTableName("example", "numbers"), ImmutableList.of());
@@ -101,7 +99,6 @@ public class TestDefaultJdbcMetadata
     {
         metadata = new DefaultJdbcMetadata(new GroupingSetsEnabledJdbcClient(database.getJdbcClient(),
                 Optional.of(true)),
-                TimestampTimeZoneDomain.ANY,
                 false,
                 ImmutableSet.of());
         ConnectorTableMetadata tableMetadata = new ConnectorTableMetadata(new SchemaTableName("example", "numbers"), ImmutableList.of());
@@ -343,7 +340,7 @@ public class TestDefaultJdbcMetadata
                     // The query effectively intersects firstDomain and secondDomain, but this is not visible in JdbcTableHandle.constraint,
                     // as firstDomain has been converted into a PreparedQuery
                     Optional.of(ImmutableMap.of(groupByColumn, secondDomain)));
-        assertThat(((JdbcQueryRelationHandle) tableHandleWithFilter.getRelationHandle()).getPreparedQuery().query())
+        assertThat(((JdbcQueryRelationHandle) tableHandleWithFilter.getRelationHandle()).getPreparedQuery().getQuery())
                 .isEqualTo("SELECT \"TEXT\", count(*) AS \"_pfgnrtd_0\" " +
                         "FROM \"" + database.getDatabaseName() + "\".\"EXAMPLE\".\"NUMBERS\" " +
                         "WHERE \"TEXT\" IN (?,?) " +
@@ -369,7 +366,7 @@ public class TestDefaultJdbcMetadata
                 aggregatedTable,
                 new Constraint(TupleDomain.withColumnDomains(ImmutableMap.of(nonGroupByColumn, domain))));
         assertThat(tableHandleWithFilter.getConstraint().getDomains()).isEqualTo(Optional.of(ImmutableMap.of(nonGroupByColumn, domain)));
-        assertThat(((JdbcQueryRelationHandle) tableHandleWithFilter.getRelationHandle()).getPreparedQuery().query())
+        assertThat(((JdbcQueryRelationHandle) tableHandleWithFilter.getRelationHandle()).getPreparedQuery().getQuery())
                 .isEqualTo("SELECT \"TEXT\", count(*) AS \"_pfgnrtd_0\" " +
                         "FROM \"" + database.getDatabaseName() + "\".\"EXAMPLE\".\"NUMBERS\" " +
                         "GROUP BY \"TEXT\"");
@@ -395,7 +392,7 @@ public class TestDefaultJdbcMetadata
                 aggregatedTable,
                 new Constraint(TupleDomain.withColumnDomains(ImmutableMap.of(valueColumn, domain))));
         assertThat(tableHandleWithFilter.getConstraint().getDomains()).isEqualTo(Optional.of(ImmutableMap.of(valueColumn, domain)));
-        assertThat(((JdbcQueryRelationHandle) tableHandleWithFilter.getRelationHandle()).getPreparedQuery().query())
+        assertThat(((JdbcQueryRelationHandle) tableHandleWithFilter.getRelationHandle()).getPreparedQuery().getQuery())
                 .isEqualTo("SELECT \"TEXT\", \"VALUE\", count(*) AS \"_pfgnrtd_0\" " +
                         "FROM \"" + database.getDatabaseName() + "\".\"EXAMPLE\".\"NUMBERS\" " +
                         "GROUP BY GROUPING SETS ((\"TEXT\", \"VALUE\"), (\"TEXT\"))");

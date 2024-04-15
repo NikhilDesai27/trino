@@ -13,6 +13,8 @@
  */
 package io.trino.plugin.deltalake;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import io.trino.spi.connector.ConnectorPartitioningHandle;
 
@@ -20,11 +22,20 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-public record DeltaLakePartitioningHandle(List<DeltaLakeColumnHandle> partitioningColumns)
+public class DeltaLakePartitioningHandle
         implements ConnectorPartitioningHandle
 {
-    public DeltaLakePartitioningHandle
+    private final List<DeltaLakeColumnHandle> partitioningColumns;
+
+    @JsonCreator
+    public DeltaLakePartitioningHandle(@JsonProperty("partitioningColumns") List<DeltaLakeColumnHandle> partitioningColumns)
     {
-        partitioningColumns = ImmutableList.copyOf(requireNonNull(partitioningColumns, "partitioningColumns is null"));
+        this.partitioningColumns = ImmutableList.copyOf(requireNonNull(partitioningColumns, "partitioningColumns is null"));
+    }
+
+    @JsonProperty
+    public List<DeltaLakeColumnHandle> getPartitioningColumns()
+    {
+        return partitioningColumns;
     }
 }
