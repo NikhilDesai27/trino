@@ -159,13 +159,13 @@ public class TestMongoConnectorTest
 //                "TopNPartial");
 //    }
 //
-//    @Test
-//    public void testSortItemWithAscendingNullsLastReflectedInExplain()
-//    {
-//        assertExplain(
-//                "EXPLAIN SELECT name FROM nation ORDER BY nationkey ASC NULLS LAST LIMIT 5",
-//                "TopNPartial\\[count = 5, orderBy = \\[nationkey ASC");
-//    }
+    @Test
+    public void testSortItemWithAscendingNullsLastReflectedInExplain()
+    {
+        assertExplain(
+                "EXPLAIN SELECT name FROM nation ORDER BY nationkey ASC NULLS LAST LIMIT 5",
+                "TopNPartial\\[count = 5, orderBy = \\[nationkey ASC");
+    }
 //
 //    @Test
 //    public void testSortItemWithAscendingNullsFirstReflectedInExplain()
