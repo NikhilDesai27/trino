@@ -35,6 +35,7 @@ import io.trino.testing.sql.TestTable;
 import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -147,18 +148,18 @@ public class TestMongoConnectorTest
                 "TopNPartial\\[count = 5, orderBy = \\[nationkey DESC");
     }
 
-//    @Test
-//    public void testSortItemWithDescendingNullsLastReflectedInExplain()
-//    {
-//        @Language("SQL") String query = "EXPLAIN SELECT name FROM nation ORDER BY nationkey DESC NULLS LAST LIMIT 5";
-//        assertExplain(
-//                query,
-//                "\\[count = 5, orderBy = \\[nationkey ASC");
-//        assertExplainDoesNotContain(
-//                query,
-//                "TopNPartial");
-//    }
-//
+    @Test
+    public void testSortItemWithDescendingNullsLastReflectedInExplain()
+    {
+        @Language("SQL") String query = "EXPLAIN SELECT name FROM nation ORDER BY nationkey DESC NULLS LAST LIMIT 5";
+        assertExplain(
+                query,
+                "count = 5, orderBy = \\[nationkey ASC");
+        assertExplainDoesNotContain(
+                query,
+                "TopNPartial");
+    }
+
     @Test
     public void testSortItemWithAscendingNullsLastReflectedInExplain()
     {
