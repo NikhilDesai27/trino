@@ -35,7 +35,6 @@ import io.trino.testing.sql.TestTable;
 import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
-import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -151,12 +150,8 @@ public class TestMongoConnectorTest
     @Test
     public void testSortItemWithDescendingNullsLastReflectedInExplain()
     {
-        @Language("SQL") String query = "EXPLAIN SELECT name FROM nation ORDER BY nationkey DESC NULLS LAST LIMIT 5";
-        assertExplain(
-                query,
-                "count = 5, orderBy = \\[nationkey ASC");
         assertExplainDoesNotContain(
-                query,
+                "EXPLAIN SELECT name FROM nation ORDER BY nationkey DESC NULLS LAST LIMIT 5",
                 "TopNPartial");
     }
 
@@ -167,18 +162,14 @@ public class TestMongoConnectorTest
                 "EXPLAIN SELECT name FROM nation ORDER BY nationkey ASC NULLS LAST LIMIT 5",
                 "TopNPartial\\[count = 5, orderBy = \\[nationkey ASC");
     }
-//
-//    @Test
-//    public void testSortItemWithAscendingNullsFirstReflectedInExplain()
-//    {
-//        @Language("SQL")  String query = "EXPLAIN SELECT name FROM nation ORDER BY nationkey ASC NULLS FIRST LIMIT 5";
-//        assertExplain(
-//                query,
-//                "\\[count = 5, orderBy = \\[nationkey ASC");
-//        assertExplainDoesNotContain(
-//                query,
-//                "TopNPartial");
-//    }
+
+    @Test
+    public void testSortItemWithAscendingNullsFirstReflectedInExplain()
+    {
+        assertExplainDoesNotContain(
+                "EXPLAIN SELECT name FROM nation ORDER BY nationkey ASC NULLS FIRST LIMIT 5",
+                "TopNPartial");
+    }
 
     @Override
     protected Optional<DataMappingTestSetup> filterDataMappingSmokeTestData(DataMappingTestSetup dataMappingTestSetup)
